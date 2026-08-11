@@ -1,178 +1,166 @@
-# FS25 Precision Ag Technical Implementation Plan
+# FS25 John Deere Precision Ag Technical Implementation Plan
 
-This document defines a technical engineering plan for building a John Deere-inspired precision agriculture stack inside a Farming Simulator 25 mod environment. It is intended to support actual implementation planning rather than brand storytelling or high-level concept design.
+This document defines the engineering plan for building a real-world Deere-inspired precision agriculture system inside Farming Simulator 25. It is intended to translate actual precision-ag technology into a practical and buildable FS25 architecture rather than a shallow visual simulation.
 
-The purpose of this plan is to translate Deere precision-ag principles into an executable FS25 architecture using:
+The implementation is based on the structure used by real Deere systems:
 
-- FS25 Lua vehicle and mod logic
-- Dashboard Live in-cab display integration
-- a local Node.js bridge service
-- a web-based G5-style frontend
-- data persistence and field-operation tracking
-
----
-
-## 1. Project Objective
-
-The mod suite should provide a believable precision agriculture workflow centered around:
-
-- guidance and steering assistance
-- pass tracking and field coverage analysis
-- implement-aware operation logic
-- real-time telemetry display
-- machine coordination and operational synchronization
-- field data persistence and repeatable guidance line generation
-
-The design should prioritize technical realism, low-latency communication, and modularity. The ambition is not to emulate Deere software exactly, but to reproduce the architecture, logic, and user flow behind real precision agriculture systems.
+- vehicle telemetry and machine state export
+- in-cab display workflow
+- guidance control and steering correction
+- connected data flow between vehicle, bridge, and frontend
+- field coverage tracking and pass records
+- operational data storage for future analysis and automation
 
 ---
 
-## 2. Technical Design Principles
+## 1. Design Objective
 
-### 2.1 Modular architecture
-The implementation should be split into discrete layers with clearly defined responsibilities.
+The project should produce a precision-ag stack that behaves like an actual John Deere operational system:
 
-### 2.2 Real-time telemetry first
-All precision functions should be driven by live vehicle data instead of static assumptions.
+- machine position, heading, speed, and steering are always tracked
+- guidance is data-driven and repeatable
+- field coverage is visible and measurable
+- the operator sees the machine as part of a connected field system
+- the display is a practical interface, not just a cosmetic HUD
 
-### 2.3 Data-driven guidance
-Guidance and automation logic should derive from recorded field references and live machine state.
-
-### 2.4 Soft abstraction layer
-The system should isolate simulation logic from the visualization layer so the UI can evolve without breaking core vehicle logic.
-
-### 2.5 Extensibility
-The stack should support future modules such as section control, machine sync, or more advanced agronomic analytics.
+This is the core difference between a generic mod and a believable precision agricultural suite.
 
 ---
 
-## 3. System Architecture Overview
+## 2. Real-World Architecture to Implement
+
+A real Deere precision-ag stack is organized around connected layers, not a single feature block.
 
 ```text
-┌──────────────────────────────────────────────────────────────────────┐
-│ FS25 Lua Mod Layer                                                   │
-│ - vehicle telemetry export                                            │
-│ - steering control logic                                              │
-│ - implement state tracking                                            │
-│ - field pass logging                                                  │
-│ - Dashboard Live variable registration                                │
-└──────────────────────────────┬───────────────────────────────────────┘
-                               │
-                               │ websocket / local bridge
-                               │
-┌──────────────────────────────▼───────────────────────────────────────┐
-│ Local Bridge / Service Layer                                          │
-│ - receive telemetry from game                                         │
-│ - forward state to frontend                                            │
-│ - route commands back to game                                         │
-│ - store operation data                                                │
-│ - manage session state                                                │
-└──────────────────────────────┬───────────────────────────────────────┘
-                               │
-                               │ HTTP / WS API
-                               │
-┌──────────────────────────────▼───────────────────────────────────────┐
-│ Browser / Tablet Frontend                                             │
-│ - G5-style dashboard                                                  │
-│ - field map and coverage overlays                                     │
-│ - guidance display                                                    │
-│ - machine sync controls                                               │
-│ - configuration panels                                                │
-└──────────────────────────────────────────────────────────────────────┘
+FS25 Simulation / Lua Layer
+  - vehicle telemetry export
+  - implement state tracking
+  - guidance and steering logic
+  - field pass logging
+  - Dashboard Live variable registration
+
+        │
+        ▼
+Local bridge / service
+  - receives telemetry
+  - routes commands and status
+  - stores field and session data
+  - exposes live machine state
+
+        │
+        ▼
+Operator frontend
+  - G5-style display shell
+  - field map and guidance overlays
+  - pass coverage and machine status
+  - machine monitoring and configuration
 ```
+
+This structure mirrors how real Deere systems flow from machine to display to data platform.
 
 ---
 
-## 4. Technical Components
+## 3. Engineering Principles
 
-## 4.1 FS25 Lua Mod Layer
+### 3.1 Telemetry first
+The precision-ag system must be driven by real machine telemetry. Guidance and coverage are meaningless without reliable position and orientation data.
 
-This layer owns all gameplay integration and machine-level logic.
+### 3.2 Data model before UI polish
+The project should define the telemetry schema, machine state model, and pass data contract before building deeper UI features.
+
+### 3.3 Real guidance logic
+Guidance should follow a proper lateral-error model rather than simply drawing a line on a map. The system must react to heading and offset, not just display values.
+
+### 3.4 Operation-aware architecture
+The system should understand when the vehicle is idle, driving, guided, turning, in headland, or in a field operation.
+
+### 3.5 Extensibility
+The stack should be modular enough to add section control, variable-rate patterns, and multi-machine coordination later without reworking the entire design.
+
+---
+
+## 4. System Components
+
+## 4.1 FS25 Lua / Mod Layer
+
+This is the data-generation layer. It owns the actual machine state and sends it to the bridge.
 
 ### Responsibilities
 
-- export vehicle and implement state to the bridge
-- track field position, heading, velocity, and steering angle
-- run guidance and steering correction loops
-- detect active field operations
-- log pass boundaries and path records
-- register variables for Dashboard Live
+- export x, z, heading, speed, and steering state
+- track implement width and raised/lowered state
+- detect active operation and guidance state
+- capture pass points and field activity
+- register variables for Dashboard Live widgets
+- send telemetry to the local bridge at a controlled interval
 
-### Core data exported from the game
+### Core values to export
 
-- netId
-- vehicle type
-- operation mode
+- vehicleId
+- operationMode
 - position: x, y, z
-- heading / yaw
-- velocity
+- heading
+- speed
 - steering angle
-- wheel rotation / slip if needed
+- implement state
 - implement width
-- implement state: lifted / lowered / active / inactive
-- machine status flags
-- current field / active operation
+- guidanceActive
+- crossTrackError
+- machineStatus
+- currentFieldId
 
-### Candidate Lua interfaces
+### Candidate Lua API
 
 - updateTelemetry()
 - updateMachineState()
 - logPassPoint()
 - applyGuidanceCorrection()
-- sendBridgeMessage(type, payload)
 - registerDashboardVariables()
+- sendBridgeMessage(type, payload)
 
 ---
 
-## 4.2 Dashboard Live Integration Layer
+## 4.2 Dashboard Live Integration
 
-Dashboard Live is the in-cab display layer and should be treated as the primary in-game visual system.
+Dashboard Live should be treated as the in-cab operating layer. It is not just a decorative overlay; it should present real machine information in a useable operator flow.
 
-### Objectives
-
-- render live tractor stats inside the cab
-- show machine status, ground speed, RPM, and guidance metrics
-- integrate with mod variables for display widgets
-- support user visibility without requiring the browser UI
-
-### Planned dashboard widgets
+### Required dashboard widgets
 
 - speed
-- RPM
 - heading
-- wheel angle
-- implement state
-- active guidance mode
-- cross-track error
+- steering angle
+- guidance mode
+- implement status
+- field activity
 - coverage progress
-- job status
+- vehicle status
 
-### Implementation note
+### Integration rule
 
-The Dashboard Live layer should not be responsible for complex calculations. It should primarily consume values sent by the Lua layer and present them in a clean operator-facing design.
+Dashboard Live should consume values from the Lua layer and present them clearly, but it should not be responsible for calculating guidance or pass logic. That work belongs to the lower layers.
 
 ---
 
-## 4.3 Bridge / Service Layer
+## 4.3 Local Bridge / Service Layer
 
-The bridge is a Node.js process that sits between the game and the browser frontend. It should provide a low-latency communication channel for telemetry and command routing.
+The bridge is the connection point between game telemetry and the browser UI. It is analogous to the machine-data communication layer in real Deere systems.
 
 ### Responsibilities
 
-- accept telemetry streams from the game
-- forward data to frontend clients
-- accept commands from the UI
-- relay commands back to the game
-- persist field data and operation records
-- maintain session and sync state for multi-machine activity
+- accept telemetry from FS25
+- broadcast to connected clients
+- accept commands from UI or operator tools
+- relay machine commands back to the game
+- store session and field state
+- maintain status and heartbeat flow
 
-### Protocols
+### Transport model
 
-- WebSocket for real-time telemetry and control
-- HTTP for REST-style status and data fetches
-- optional file-based persistence for operation records
+- WebSocket for real-time telemetry and command updates
+- HTTP endpoint for health, status, and data reads
+- optional JSON file persistence for field and session records
 
-### Message examples
+### Example telemetry message
 
 ```json
 {
@@ -180,16 +168,20 @@ The bridge is a Node.js process that sits between the game and the browser front
   "vehicleId": "tractor_01",
   "timestamp": 1712345678,
   "payload": {
-    "x": 123.4,
-    "z": 456.7,
-    "heading": 1.34,
-    "speed": 8.7,
-    "steering": 0.12,
-    "implementWidth": 12.5,
-    "activeGuidance": true
+    "x": 121.3,
+    "z": 455.2,
+    "heading": 0.82,
+    "speed": 8.4,
+    "steering": 0.15,
+    "implementWidth": 12.8,
+    "implementState": "lowered",
+    "guidanceActive": true,
+    "machineStatus": "working"
   }
 }
 ```
+
+### Example command message
 
 ```json
 {
@@ -202,258 +194,222 @@ The bridge is a Node.js process that sits between the game and the browser front
 
 ---
 
-## 4.4 Frontend Application Layer
+## 4.4 Frontend Operator Interface
 
-This layer mimics the G5 display and acts as the primary operator interface beyond the in-game monitor.
+This layer should feel like a Deere display and field operations page rather than a generic telemetry dashboard.
 
 ### Functional areas
 
-- map view of field and tractor position
-- live guidance overlay
-- pass tracking and coverage visualization
-- machine status and task summaries
-- guidance configuration panel
-- machine sync controls
-- operation history and logs
+- field map and machine tracker
+- guidance line and current path overlay
+- pass history and coverage display
+- machine status and alerts
+- configuration controls for guidance and sync
+- field record review
 
-### UI stack recommendations
+### Recommended frontend stack
 
-- React for component-based UI
-- Leaflet or map library for field overlays and vehicle rendering
-- CSS grid for dashboard layout manager
-- WebSocket client for live telemetry updates
-
-### Frontend responsibilities
-
-- receive telemetry from bridge
-- render field map and route overlays
-- show cross-track error and guidance state
-- allow mode switching and control toggles
-- display logs and operations data
+- HTML/CSS/JS for the initial prototype
+- more structured frontend later if needed
+- map rendering for the field view
+- WebSocket client for live updates
 
 ---
 
-## 5. Guidance and Control Architecture
+## 5. Guidance and Steering Model
 
-The guidance system should be built from a real line-following model.
+Real Deere guidance systems use a position and heading loop that continuously compares the machine to a reference path. The FS25 implementation should do the same.
 
-## 5.1 Core concepts
+### 5.1 Core geometry
 
-- reference line or guidance line
-- current vehicle position
-- vehicle heading
-- target heading derived from line direction
-- cross-track error e_ct
+The machine state is defined by:
 
-## 5.2 Reference model
+- position: $x$, $z$
+- heading: $\theta$
+- reference line position: $x_{ref}$, $z_{ref}$
+- target course direction: $\theta_{ref}$
 
-The cross-track error can be computed as:
+### 5.2 Cross-track error
+
+The key measurement is lateral offset from the guidance line:
 
 $$e_{ct} = (x_{veh} - x_{ref})\sin(\theta_{ref}) - (z_{veh} - z_{ref})\cos(\theta_{ref})$$
 
-This is used to calculate steering correction.
+This gives a numeric error value that can drive steering correction.
 
-## 5.3 PID steering controller
+### 5.3 Steering controller
 
-Steering correction can be implemented using:
+A practical controller can be implemented using a PID-style correction model:
 
 $$\delta(t) = K_p e_{ct}(t) + K_i \int_0^t e_{ct}(\tau)\,d\tau + K_d \frac{de_{ct}(t)}{dt}$$
 
 ### Implementation notes
 
-- tune gains per vehicle class and implement combination
-- limit steering correction to realistic machine values
-- smooth correction with damping and filtering
-- disable guidance when manual driving is active
-- ensure completion and re-entry logic at headlands
+- tune gains separately for tractors and harvesters
+- apply steering limits to keep behavior realistic
+- smooth correction with damping to prevent oscillation
+- detect when the machine leaves the guidance line
+- support manual override and reacquisition
+
+This is the real engineering pattern behind modern guidance systems.
 
 ---
 
-## 6. AutoPath-style Logic and Pass Generation
+## 6. Field Pass Generation and Coverage Logic
 
-The system should support generating follow-up guidance lines from recorded field passes.
+Deere systems store field operations as structured records and use them later for repeated passes and coverage review.
 
-### Planned workflow
-
-1. Record planting or pass data during a primary operation.
-2. Store sampled points with position and implement width.
-3. Build a path polyline from those samples.
-4. Offset the polyline based on tool width and operation type.
-5. Store the generated guidance line for later operations.
-
-### Required data structures
+### Required pass record structure
 
 ```ts
 interface FieldPassRecord {
   passId: string;
   fieldId: string;
   vehicleId: string;
-  operationType: 'planting' | 'spraying' | 'fertilizing' | 'harvesting';
-  points: Array<{ x: number; z: number; heading?: number; }>; 
+  operationType: 'planting' | 'spraying' | 'fertilizing' | 'harvesting' | 'tillage';
+  points: Array<{ x: number; z: number; heading?: number; timestamp?: number }>;
   implementWidth: number;
+  status: 'active' | 'complete' | 'paused';
   timestamp: number;
 }
 ```
 
-```ts
-interface GuidanceLine {
-  lineId: string;
-  fieldId: string;
-  sourcePassId: string;
-  points: Array<{ x: number; z: number }>;
-  widthOffset: number;
-  heading: number;
-}
-```
+### Workflow
 
-### Offset logic
+1. begin an operation
+2. record pass samples at a fixed interval
+3. store points with heading and vehicle metadata
+4. build a path polyline from data
+5. offset the path based on implement width
+6. store the generated guidance line for reuse
 
-- calculate normal vector from pass direction
-- apply offset using implement width
-- maintain valid geometry for curved rows and headlands
-- handle irregular field shapes and turning paths
+### Coverage logic
+
+The system should understand:
+
+- where the machine has already traveled
+- how much overlap exists
+- which areas are complete or skipped
+- how tool width affects pass pattern planning
+
+This is a major part of actual precision-ag workflow and should be core to the FS25 implementation.
 
 ---
 
-## 7. Section Control and Input Efficiency
+## 7. Section Control and Application Efficiency
 
-Section control is a high-value feature because it reduces input waste and aligns with Deere precision-ag messaging.
+Section control is one of the best examples of real Deere precision-ag logic. It reduces double application and minimizes wasted inputs.
 
 ### Feature requirements
 
-- define implement sections and their coverage areas
-- prevent duplicate application over already-covered zones
-- calculate coverage mask as the machine moves through the field
-- support section state toggling for specific implements or booms
+- define implement sections and their physical coverage area
+- compare current coverage against already-treated zones
+- disable sections where overlap exists
+- manage on/off state as vehicle progresses through field
 
-### Data requirements
+### Data required
 
 - implement width
 - section count
-- section active / inactive state
-- ground coverage polygon or occupancy grid
-- pass history
+- section state
+- field coverage mask
+- pass direction and location history
 
-### Potential gameplay mapping
+### Examples in FS25
 
-- spraying pass should not overlap previously sprayed boundary areas
-- seeding should register field coverage based on row spacing and tool width
-- fertilizer or chemical operations can expose per-section status
+- spraying should stop or turn off sections in already sprayed areas
+- seeding should respect prior pass overlap
+- fertilizer patterns should reflect field records and coverage history
+
+This moves the project beyond a visual “precision” layer and into real operational efficiency.
 
 ---
 
-## 8. Field Data and Persistence Model
+## 8. Field Data and Persistence
 
-A proper implementation needs durable field data storage.
+Real Deere systems rely on structured field data. That is what converts raw machine movement into useful operations.
 
-### Recommended storage targets
-
-- operation logs
-- field boundaries
-- guidance lines
-- pass records
-- machine telemetry snapshots
-
-### Suggested file layout
+### Recommended storage layout
 
 ```text
 /data/
   fields/
     field_001.json
-    field_002.json
   passes/
     field_001_planting_001.json
-    field_001_spray_001.json
   guidance/
     field_001_guidance_001.json
   sessions/
     session_2026_08_11.json
 ```
 
-### Data persistence rules
+### Persistent data types
 
-- save pass history at a set interval
-- flush telemetry snapshots on shutdown or mode changes
-- keep machine session data separate from long-term field history
-- maintain versioning for schema changes
+- field boundaries
+- guidance lines
+- pass records
+- operation history
+- machine state snapshots
+- session summaries
+
+### Persistence rules
+
+- save pass data on interval or completion
+- maintain field record schema versioning
+- separate session data from long-term field history
+- ensure old records are not silently corrupted by new versions
 
 ---
 
-## 9. Machine Sync and Multi-Machine Coordination
+## 9. Machine Sync and Coordination
 
-Machine synchronization is a natural extension of a precision-ag system and is aligned with John Deere’s machine network concepts.
+Real precision-ag ecosystems are not limited to one machine. They may involve coordinated work between multiple machines and operators. That should inform the design of the FS25 system.
 
-### Core idea
+### Potential multi-machine model
 
-One machine acts as the leader and others follow, with coordinated movement and synchronized field operations.
+- leader / follower roles
+- shared field operation status
+- synchronized pass progress
+- machine heartbeat and local reconnect handling
+- command routing between machines
 
-### Planned components
-
-- leader state broadcast
-- follower state listening
-- coordination commands
-- synchronization heartbeat
-- nudge controls for forward / backward correction
-
-### Example message flow
+### Example sync message
 
 ```json
 {
   "type": "syncState",
-  "leaderId": "combine_01",
+  "leaderId": "tractor_01",
   "position": { "x": 28.5, "z": 58.2 },
   "heading": 2.1,
-  "status": "loading"
+  "status": "working"
 }
 ```
 
-### Implementation constraints
-
-- keep updates low-latency
-- handle network drop and reconnect states
-- ensure role assignment is explicit
+This is aligned with real-world machine connectivity and coordinated farm operations.
 
 ---
 
-## 10. Frontend Architecture and UI Components
+## 10. UI and Functional Layout
 
-The frontend should be organized around clear, reusable dashboard panels.
+The frontend should be organized as a proper operator display, not as a random dashboard.
 
-### Core components
+### Core UI blocks
 
-- Header / machine status bar
-- Map panel
-- Guidance panel
-- Telemetry panel
-- Coverage panel
-- Machine sync panel
-- Configuration panel
-- Logs / operation history
+- top status bar with machine health and operation mode
+- left panel for telemetry and diagnostics
+- center map panel with field and guidance overlay
+- right panel for guidance state and machine actions
+- lower strip for event feed and operational logging
 
-### Layout manager concept
+### Design principle
 
-Design the dashboard in a CSS-grid layout with interchangeable widget cards. This supports a realistic G5-style display arrangement and future user personalization.
-
-### Example layout
-
-```text
-┌───────────────────────────────────────┐
-│ Machine Header                       │
-├───────────────┬───────────────────────┤
-│ Telemetry     │ Guidance / map        │
-│ Panels        │                       │
-├───────────────┼───────────────────────┤
-│ Coverage      │ Machine sync / logs   │
-└───────────────┴───────────────────────┘
-```
+The interface should be clear enough to be useful while driving. It must prioritize actionable operator information over decorative data.
 
 ---
 
-## 11. State Management Model
+## 11. State Model
 
-The front end and bridge should behave around a clear state model.
-
-### Proposed state schema
+The bridge and frontend should share an explicit machine state structure.
 
 ```ts
 interface VehicleState {
@@ -463,135 +419,110 @@ interface VehicleState {
   z: number;
   heading: number;
   speed: number;
-  rpm: number;
   steeringAngle: number;
   implementState: 'raised' | 'lowered' | 'active';
-  guidanceActive: boolean;
   guidanceMode: 'manual' | 'straight' | 'autoPath' | 'turn';
+  guidanceActive: boolean;
+  machineStatus: 'idle' | 'working' | 'turning' | 'paused';
   currentFieldId?: string;
   currentOperation?: string;
   crossTrackError?: number;
 }
 ```
 
-Use this state to drive rendering, logic, and operator controls.
+This keeps the data contract stable and easy to validate.
 
 ---
 
 ## 12. Implementation Roadmap
 
-## Phase 1: Telemetry and display foundation
+## Phase 1: Telemetry foundation
 
-- vehicle telemetry export from FS25
-- basic websocket bridge
-- in-cab Dashboard Live widgets
-- live data display in the frontend
+- export live machine state from FS25
+- validate packet flow through the local bridge
+- render live values in a basic display
+- verify machine update rates and timing
 
 ## Phase 2: Guidance engine
 
-- reference path storage
-- cross-track error model
-- PID steering or simplified line-following controller
-- basic guidance mode toggle
+- store guidance lines
+- compute cross-track error
+- apply steering correction logic
+- support manual and guided modes
 
-## Phase 3: Pass tracking and field logic
+## Phase 3: Pass tracking
 
-- pass logging
-- implement width and coverage tracking
-- coverage overlays and visual maps
-- field data persistence
+- capture path samples during operations
+- build pass records and coverage data
+- render field overlays
+- persist pass summaries
 
-## Phase 4: Machine sync and automation
+## Phase 4: Section control and efficiency
 
-- leader/follower state sharing
-- sync controls
-- turn automation and headland handling
+- implement overlap prevention logic
+- support implement section states
+- add pass completion and coverage metrics
 
-## Phase 5: Advanced precision workflows
+## Phase 5: Advanced operations
 
-- section control
-- variable-rate application patterns
-- operation planning and field analysis
-- broader dashboard configuration
-
----
-
-## 13. Risks and Technical Constraints
-
-### 13.1 FS25 mod environment complexity
-FS25 modding logic can be tightly coupled to in-game systems, so the telemetry contract must be kept stable and lightweight.
-
-### 13.2 Real-time latency
-If telemetry updates are too slow, guidance and pass logging will feel inaccurate. Keep tick rate controlled and avoid large payloads.
-
-### 13.3 UI complexity
-The display should be modular and controlled rather than overloaded with too many widgets at once.
-
-### 13.4 Data integrity
-Field pass and guidance data must be versioned and validated so later operations do not corrupt older records.
+- multiple-machine coordination
+- operation planning and analysis
+- deeper guidance and automation logic
+- extension toward a full Deere-style precision-ag suite
 
 ---
 
-## 14. Recommended Developer Workflow
+## 13. Risks and Constraints
 
-1. Build telemetry export from the Lua side.
-2. Validate that data arrives through the bridge in real time.
-3. Render telem data in a simple UI shell.
-4. Add path logging and basic guidance logic.
-5. Add field overlays and coverage map visualizations.
-6. Add automation for turn logic and machine coordination.
-7. Add persistence and module layering.
+### 13.1 Real-time timing
+If telemetry updates are too slow, guidance and pass tracking will feel inaccurate. The system needs controlled, stable message frequency.
 
-This creates a safe progression from a working data stream to a full precision-ag system.
+### 13.2 Overengineering the UI
+The project must keep the UI useful and readable. A real in-cab display should not overwhelm the operator.
 
----
+### 13.3 Data quality
+Field records must be valid and consistent. If the path data is noisy or malformed, guidance will be unreliable.
 
-## 15. Suggested Deliverable Structure
-
-```text
-/engine
-  /lua
-  /dashboard
-/server
-  /bridge
-  /api
-  /storage
-/web
-  /src
-  /components
-  /maps
-  /state
-/docs
-  README.md
-  References.md
-  ag-tech.md
-  ag-tech-technical.md
-```
-
-This structure keeps the simulation logic, communication layer, and frontend UI cleanly separated.
+### 13.4 Mod environment constraints
+FS25 integration boundaries and game constraints must be treated as first-class design constraints.
 
 ---
 
-## 16. Final Engineering Recommendation
+## 14. Recommended Execution Order
 
-The best implementation path is to build the project as a telemetry and guidance platform first, then layer precision-ag features on top.
+1. define telemetry schema
+2. build bridge and live message flow
+3. render operator dashboard with live values
+4. implement guidance line logic and error tracking
+5. add pass recording and field coverage
+6. integrate section control and overlap logic
+7. add persistence and operational review
+8. expand to multi-machine flow when the core is stable
 
-Do not start with a full visual interface or deep agronomic simulation. Start with:
+This progression mirrors actual precision-ag system development in the real world.
+
+---
+
+## 15. Final Engineering Recommendation
+
+The proper implementation direction for this project is to build a connected machine-data system first, then add precision-ag behavior on top.
+
+Do not begin with a broad UI or large feature list. Start with:
 
 - telemetry export
-- bridge communication
-- display of vehicle data
-- guidance logic
-- pass recording and display
+- machine state flow
+- a working bridge
+- real guidance math
+- pass tracking and coverage visibility
 
-Once those are stable, add machine sync, field planning, section control, and advanced automation.
+Once that foundation is reliable, add more advanced Deere-style functions such as section control, operational review, and multi-machine coordination.
 
-This approach reduces risk, makes debugging easier, and aligns strongly with the real structure of modern precision ag systems.
+That approach delivers a credible FS25 precision-ag mod and aligns strongly with how John Deere precision agriculture actually works in the real world.
 
 ---
 
-## 17. Conclusion
+## 16. Conclusion
 
-This technical plan gives the project a realistic implementation path based on the same principles behind Deere’s precision agriculture ecosystem: connected equipment, live operational data, guidance automation, field coverage analysis, and structured farm data management.
+This technical plan gives the project a realistic FS25 implementation path grounded in the actual architecture behind John Deere Precision Ag systems: connected machine data, operator displays, guidance logic, field coverage analysis, and structured farm records.
 
-The FS25 mod should be designed as a layered precision-ag platform, not as a single isolated feature. The system should evolve from a live telemetry stack into a complete field automation and data management tool, with the G5-style display acting as the operator interface and the bridge providing the data backbone.
+The FS25 mod should be designed as a layer-based precision-ag platform, not a single disconnected feature. The result should feel like a genuine digital system used to guide, monitor, and optimize field operations in a connected, data-driven workflow.

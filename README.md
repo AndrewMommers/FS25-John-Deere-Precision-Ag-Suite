@@ -5,9 +5,9 @@
 ![Dashboard Live](https://img.shields.io/badge/Dependency-Dashboard%20Live%20v1.0+-blue?style=for-the-badge)
 ![License](https://img.shields.io/badge/License-MIT-green?style=for-the-badge)
 
-A John Deere-inspired precision agriculture suite for Farming Simulator 25. The project explores a modern guidance and automation ecosystem built around in-game telemetry, Dashboard Live in-cab displays, local machine communication, and a web-based G5-style operator interface.
+A John Deere Precision Ag-inspired suite for Farming Simulator 25. The project explores a modern guidance and automation ecosystem built around in-game telemetry, Dashboard Live in-cab displays, local machine communication, and a web-based G5-style operator interface that follows the same precision-ag workflow used by Deere systems.
 
-> Status: this repository is currently in the planning and design phase. It is structured to support future implementation work and a modular build sequence.
+> Status: this repository is currently in the planning and design phase, structured around a John Deere Precision Ag-style architecture for future implementation work and a modular build sequence.
 
 ---
 
