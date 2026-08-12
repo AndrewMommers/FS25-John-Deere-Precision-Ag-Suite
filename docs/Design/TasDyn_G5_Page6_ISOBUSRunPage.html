@@ -1,0 +1,549 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>G5 Universal Display - ISOBUS Run Page</title>
+    
+    <!-- Leaflet CSS -->
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
+    
+    <style>
+        /* Base Reset & Fonts */
+        * { box-sizing: border-box; margin: 0; padding: 0; user-select: none; }
+        body { 
+            background-color: #1a1a1a; 
+            font-family: "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            overflow: hidden;
+        }
+
+        /* Device Bezel */
+        .device-bezel {
+            width: 1024px;
+            height: 600px;
+            background-color: #000;
+            border: 6px solid #222;
+            border-radius: 4px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.8);
+            display: flex;
+            flex-direction: column;
+            position: relative;
+        }
+
+        /* 1. Top Title Bar */
+        .title-bar {
+            background-color: #275623;
+            color: white;
+            text-align: center;
+            font-weight: 700;
+            font-size: 13px;
+            padding: 3px 0;
+            border-bottom: 2px solid #ffe100;
+            letter-spacing: 0.5px;
+            display: flex;
+            justify-content: space-between;
+            padding: 3px 15px;
+        }
+        
+        .connection-status { font-size: 11px; color: #ff3b30; }
+        .connection-status.connected { color: #00ff00; }
+
+        /* 2. Header Bar */
+        .header-bar {
+            background-color: #495b28;
+            color: white;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 0 10px 0 15px;
+            height: 42px;
+        }
+        .header-title { font-size: 22px; font-weight: 700; letter-spacing: 0.5px; }
+        .header-status { display: flex; align-items: center; height: 100%; }
+        
+        .status-items { display: flex; align-items: center; gap: 12px; font-weight: 700; font-size: 15px; padding-right: 15px; border-right: 1px solid #7a8a5b; height: 100%; }
+        .icon-rtk { background: white; color: #495b28; padding: 1px 7px; border-radius: 10px; font-size: 12px; font-weight: 900; }
+        
+        .nav-arrows { display: flex; align-items: center; gap: 15px; padding-left: 15px; font-size: 20px; font-weight: bold; }
+        .arrow-btn { cursor: pointer; display: flex; align-items: center; justify-content: center; opacity: 0.9; }
+        .arrow-btn:hover { opacity: 1; transform: scale(1.1); }
+
+        /* 3. Main Workspace */
+        .workspace {
+            display: grid;
+            grid-template-columns: 375px 1fr;
+            flex: 1;
+            background-color: #3b3a1a;
+            position: relative;
+            height: calc(100% - 110px);
+        }
+
+        /* --- Left Pane (Map + Shift Track) --- */
+        .left-pane {
+            display: flex;
+            flex-direction: column;
+            border-right: 2px solid #222;
+            background-color: #3b3a1a;
+        }
+
+        .map-wrapper {
+            height: 250px;
+            position: relative;
+            border-bottom: 2px solid #333;
+            overflow: hidden;
+            background-color: #8fa3b3;
+        }
+
+        #isobus-map { width: 100%; height: 100%; z-index: 1; }
+
+        .cross-track-container {
+            position: absolute; top: 0; left: 0; right: 0; height: 26px;
+            background-color: rgba(255, 255, 255, 0.95); z-index: 1000; display: flex; border-bottom: 1px solid #999;
+        }
+        .ct-ticks { flex: 1; background-image: repeating-linear-gradient(to right, transparent, transparent 9px, #ccc 10px); position: relative; display: flex; justify-content: center; }
+        .ct-yellow-box {
+            position: absolute; background-color: #ffe100; color: black; font-weight: bold; font-size: 16px;
+            height: 100%; width: 50px; left: 50%; transform: translateX(-50%);
+            display: flex; align-items: center; justify-content: center; border-left: 1px solid #666; border-right: 1px solid #666;
+        }
+        .ct-yellow-box span { font-size: 11px; margin-left: 1px; font-weight: normal; }
+
+        .shank-label { position: absolute; top: 32px; left: 0; z-index: 1000; background-color: rgba(60,60,60,0.7); color: white; padding: 1px 6px; font-size: 13px; }
+
+        .map-btn-fork {
+            position: absolute; top: 32px; right: 8px; z-index: 1000;
+            width: 32px; height: 32px; border-radius: 50%;
+            background-color: rgba(50,50,50,0.8); border: 2px solid rgba(255,255,255,0.6);
+            display: flex; justify-content: center; align-items: center;
+        }
+
+        .flag-circle-sm {
+            position: absolute; z-index: 1000; width: 34px; height: 34px; border-radius: 50%;
+            background-color: white; border: 2px solid #333; display: flex; justify-content: center; align-items: center;
+        }
+        .flag-circle-sm svg { width: 20px; height: 20px; fill: #111; }
+
+        /* Left Bottom Row (Shift Track Box + Dark Olive Fill) */
+        .left-bottom-row {
+            flex: 1;
+            display: flex;
+            background-color: #3b3a1a;
+            padding: 4px;
+            gap: 4px;
+        }
+
+        .shift-track-card {
+            width: 150px;
+            background-color: #e8e4d3;
+            border: 2px solid #333;
+            border-radius: 3px;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .sb-header-light { background-color: #dcd7c6; color: #444; font-size: 11px; font-weight: bold; text-align: center; padding: 4px 0; border-bottom: 1px solid #b5b1a1; }
+        
+        .shift-content { padding: 8px; flex: 1; display: flex; flex-direction: column; justify-content: space-between; }
+        
+        .sb-btn {
+            background: linear-gradient(to bottom, #ffffff, #dcdcdc);
+            border: 1px solid #777;
+            border-radius: 4px;
+            padding: 6px; text-align: center;
+            font-weight: 700; font-size: 13px; color: #111;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+            cursor: pointer; width: 100%;
+        }
+        
+        .shift-controls { display: flex; gap: 5px; margin-top: 4px; }
+        .shift-controls .sb-btn { flex: 1; padding: 4px; display: flex; justify-content: center; align-items: center; height: 36px; }
+
+        .sb-value { font-size: 15px; font-weight: bold; color: #111; margin-top: 8px; line-height: 1; }
+        .sb-label { font-size: 11px; color: #555; }
+
+        /* --- Right Terminal Section --- */
+        .terminal-panel {
+            background-color: #dedcd5;
+            padding: 8px;
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+
+        /* Device Row Card */
+        .device-card {
+            background-color: #f7f5ed;
+            border: 1px solid #b0aca0;
+            border-radius: 3px;
+            padding: 12px 16px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+        }
+
+        .device-info h3 {
+            font-size: 16px;
+            font-weight: 700;
+            color: #111;
+            margin-bottom: 4px;
+        }
+
+        .device-info p {
+            font-size: 13px;
+            font-weight: 600;
+            color: #222;
+        }
+
+        .device-meta {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            background-color: #eae6d8;
+            padding: 6px 12px;
+            border-radius: 4px;
+            border: 1px solid #ccc7b8;
+        }
+
+        .device-graphic {
+            width: 50px;
+            height: 35px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .device-text-details {
+            display: flex;
+            flex-direction: column;
+            align-items: flex-end;
+            font-size: 10px;
+            font-weight: bold;
+            color: #111;
+            line-height: 1.2;
+        }
+
+        /* Large Dark Container below cards */
+        .terminal-container-dark {
+            flex: 1;
+            background-color: #595752;
+            border: 1px solid #444;
+            border-radius: 3px;
+        }
+
+        /* Bottom Toolbar */
+        .bottom-toolbar {
+            height: 65px;
+            background-color: #ded9c6;
+            display: flex;
+            border-top: 2px solid #333;
+        }
+        
+        .toolbar-btn {
+            flex: 1;
+            border-right: 1px solid #b5b1a1;
+            display: flex; flex-direction: column; justify-content: flex-start; align-items: center;
+            font-size: 9px; font-weight: 700; color: #111;
+            position: relative; cursor: pointer; padding-top: 6px;
+        }
+        .toolbar-btn:last-child { border-right: none; }
+        .toolbar-btn:hover { background-color: #ebe7d6; }
+        
+        .tb-indicator { position: absolute; bottom: 0; left: 0; width: 100%; height: 4px; background-color: #111; }
+        .toolbar-btn.on .tb-indicator { background-color: #318220; }
+        .toolbar-btn.off .tb-indicator { background-color: #444; }
+        
+        .tb-off-label {
+            position: absolute; bottom: 4px; left: 0; width: 100%;
+            background-color: #111; color: white; font-size: 9px; text-align: center; padding: 1px 0; font-weight: bold;
+        }
+        .tb-on-label {
+            position: absolute; bottom: 4px; left: 0; width: 100%;
+            background-color: #318220; color: white; font-size: 9px; text-align: center; padding: 1px 0; font-weight: bold;
+        }
+
+        .tb-icon { height: 26px; width: 26px; display: flex; justify-content: center; align-items: center; margin-bottom: 2px; }
+        .tb-icon svg { width: 100%; height: 100%; fill: #111; }
+        .tb-text { text-align: center; line-height: 1.1; padding: 0 2px; }
+
+        .autotrac-pie {
+            width: 22px; height: 22px; border-radius: 50%;
+            background: conic-gradient(white 0 90deg, white 90deg 180deg, #4287f5 180deg 270deg, white 270deg 360deg);
+            border: 1px solid #111; position: relative;
+        }
+        .autotrac-pie::before { content: ''; position: absolute; top: 0; bottom: 0; left: 50%; width: 1px; background: #111; }
+        .autotrac-pie::after { content: ''; position: absolute; left: 0; right: 0; top: 50%; height: 1px; background: #111; }
+
+        .menu-btn { background-color: #318220; color: white; }
+        .menu-btn .tb-icon svg { fill: white; }
+        .menu-btn .tb-indicator { background-color: #1d4d12; }
+
+        /* Custom Tractor HUD Overlay */
+        .hud-tractor {
+            position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%);
+            z-index: 500; pointer-events: none; display: flex; flex-direction: column; align-items: center;
+        }
+        .hud-line-fwd { width: 2px; height: 120px; background-color: white; margin-bottom: -4px; }
+        .hud-body { width: 14px; height: 18px; background-color: #367C2B; border-radius: 2px; position: relative; z-index: 2; }
+        .hud-wheel-l { position: absolute; left: -6px; top: 5px; width: 4px; height: 10px; background: #222; border-radius: 1px; }
+        .hud-wheel-r { position: absolute; right: -6px; top: 5px; width: 4px; height: 10px; background: #222; border-radius: 1px; }
+        .hud-link { width: 3px; height: 20px; background-color: #55ff00; position: relative; z-index: 1; margin-top: -3px; }
+        .hud-boom { width: 140px; height: 3px; background-color: #55ff00; }
+
+    </style>
+</head>
+<body>
+
+    <div class="device-bezel">
+        <!-- Top Title Bar -->
+        <div class="title-bar">
+            <span>G5 Universal Display</span>
+            <span class="connection-status" id="ws-status">DISCONNECTED</span>
+        </div>
+        
+        <!-- Header Bar -->
+        <div class="header-bar">
+            <div class="header-title" id="page-title">ISOBUS Run Page</div>
+            <div class="header-status">
+                <div class="status-items">
+                    <span id="clock">10:10</span>
+                    <!-- Cloud Icon -->
+                    <svg width="20" height="16" viewBox="0 0 24 24" fill="white"><path d="M19.35 10.04C18.67 6.59 15.64 4 12 4 9.11 4 6.6 5.64 5.35 8.04 2.34 8.36 0 10.91 0 14c0 3.31 2.69 6 6 6h13c2.76 0 5-2.24 5-5 0-2.64-2.05-4.78-4.65-4.96z"/><circle cx="19" cy="18" r="4" fill="#1a1a1a"/><text x="17.5" y="21" fill="white" font-size="10" font-weight="bold">!</text></svg>
+                    <!-- Sat Icon -->
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="white"><path d="M21 3L3 10.53v.98l6.84 2.65L12.48 21h.98L21 3z"/></svg>
+                    <span class="icon-rtk">RTK</span>
+                </div>
+                <div class="nav-arrows">
+                    <div class="arrow-btn"><svg width="24" height="24" viewBox="0 0 24 24" fill="white"><path d="M20 11H7.83l5.59-5.59L12 4l-8 8 8 8 1.41-1.41L7.83 13H20v-2z"/></svg></div>
+                    <div class="arrow-btn"><svg width="24" height="24" viewBox="0 0 24 24" fill="white"><path d="M12 4l-1.41 1.41L16.17 11H4v2h12.17l-5.58 5.59L12 20l8-8z"/></svg></div>
+                </div>
+            </div>
+        </div>
+
+        <!-- WORKSPACE: ISOBUS RUN PAGE -->
+        <div class="workspace">
+            
+            <!-- Left Pane -->
+            <div class="left-pane">
+                <!-- Map Area -->
+                <div class="map-wrapper">
+                    <div class="cross-track-container">
+                        <div class="ct-ticks"></div>
+                        <div class="ct-yellow-box">0<span>in</span></div>
+                    </div>
+                    
+                    <div class="shank-label">Shank</div>
+                    
+                    <div class="map-btn-fork">
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2">
+                            <path d="M12 22V12M12 12L6 5M12 12l6-7"/>
+                            <circle cx="6" cy="5" r="2" fill="white"/>
+                            <circle cx="18" cy="5" r="2" fill="white"/>
+                        </svg>
+                    </div>
+
+                    <!-- Map Flags -->
+                    <div class="flag-circle-sm" style="bottom: 15px; left: 60px; z-index: 1000;"><svg viewBox="0 0 24 24"><path d="M14.4 6L14 4H5v17h2v-7h5.6l.4 2h7V6z"/></svg></div>
+                    <div class="flag-circle-sm" style="bottom: 10px; left: 95px; z-index: 999;"><svg viewBox="0 0 24 24"><path d="M14.4 6L14 4H5v17h2v-7h5.6l.4 2h7V6z"/></svg></div>
+
+                    <div class="hud-tractor">
+                        <div class="hud-line-fwd"></div>
+                        <div class="hud-body">
+                            <div class="hud-wheel-l"></div>
+                            <div class="hud-wheel-r"></div>
+                        </div>
+                        <div class="hud-link"></div>
+                        <div class="hud-boom"></div>
+                    </div>
+
+                    <div id="isobus-map"></div>
+                </div>
+
+                <!-- Shift Track Box + Olive Fill -->
+                <div class="left-bottom-row">
+                    <div class="shift-track-card">
+                        <div class="sb-header-light">Shift Track</div>
+                        <div class="shift-content">
+                            <div class="sb-btn" style="padding: 2px;">
+                                <svg width="24" height="24" viewBox="0 0 24 24"><path d="M6 16h4v4h4v-4h4v-4h-4V8h-4v4H6v4zm-2-8v8h2v-8H4zm14 0v8h2v-8h-2z" fill="#111"/></svg>
+                            </div>
+                            <div class="shift-controls">
+                                <div class="sb-btn">
+                                    <svg viewBox="0 0 24 24" width="16" height="16"><path d="M14 7l-5 5 5 5V7z"/><path d="M5 6h2v12H5z"/></svg>
+                                </div>
+                                <div class="sb-btn">
+                                    <svg viewBox="0 0 24 24" width="16" height="16"><path d="M10 7l5 5-5 5V7z"/><path d="M17 6h2v12h-2z"/></svg>
+                                </div>
+                            </div>
+                            <div>
+                                <div class="sb-value">1.0 in</div>
+                                <div class="sb-label">Shift Increment</div>
+                            </div>
+                        </div>
+                    </div>
+                    <div style="flex: 1; background-color: #3b3a1a;"></div>
+                </div>
+            </div>
+
+            <!-- Right Terminal Section -->
+            <div class="terminal-panel">
+                <!-- StarFire Device Row -->
+                <div class="device-card">
+                    <div class="device-info">
+                        <h3>StarFire - Vehicle Navigation</h3>
+                        <p>John Deere</p>
+                    </div>
+                    <div class="device-meta">
+                        <div class="device-graphic">
+                            <svg viewBox="0 0 60 40" width="50" height="35">
+                                <ellipse cx="30" cy="22" rx="20" ry="10" fill="#367C2B" />
+                                <path d="M 12 22 Q 30 10 48 22" fill="#ffe100" stroke="#367C2B" stroke-width="2" />
+                                <rect x="25" y="24" width="10" height="4" fill="#111" rx="1" />
+                            </svg>
+                        </div>
+                        <div class="device-text-details">
+                            <span>StarFire</span>
+                            <span>7500</span>
+                            <span style="margin-top: 4px; font-weight: normal; color: #555;">Machine</span>
+                            <span style="font-weight: normal; color: #555;">12347</span>
+                            <span style="margin-top: 2px;">SN:</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- TruSet Tillage Device Row -->
+                <div class="device-card">
+                    <div class="device-info">
+                        <h3>Tillage</h3>
+                        <p>John Deere</p>
+                    </div>
+                    <div class="device-meta">
+                        <div style="background-color: #367C2B; padding: 4px 8px; border-radius: 3px; display: flex; align-items: center;">
+                            <span style="color: #ffe100; font-weight: 900; font-style: italic; font-size: 13px; letter-spacing: -0.5px;">TruSet</span>
+                            <span style="color: white; font-weight: bold; font-size: 11px; margin-left: 4px;">Tillage</span>
+                        </div>
+                        <div class="device-text-details">
+                            <span>TruSet</span>
+                            <span>Tillage</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Dark Container Area -->
+                <div class="terminal-container-dark"></div>
+            </div>
+
+        </div>
+
+        <!-- Bottom Toolbar -->
+        <div class="bottom-toolbar">
+            <div class="toolbar-btn">
+                <div class="tb-icon"><svg viewBox="0 0 24 24"><path d="M4 6h16v2H4zm0 5h16v2H4zm0 5h16v2H4z"/></svg></div>
+                <div class="tb-text">SETUP</div>
+                <div class="tb-indicator"></div>
+            </div>
+            
+            <div class="toolbar-btn off">
+                <div class="tb-icon"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="8" stroke="#111" stroke-width="2" fill="#d3d3d3"/></svg></div>
+                <div class="tb-text">WORK</div>
+                <div class="tb-off-label">OFF</div>
+                <div class="tb-indicator"></div>
+            </div>
+            
+            <div class="toolbar-btn on">
+                <div class="tb-icon"><svg viewBox="0 0 24 24"><path d="M3 20h18L16 4H8L3 20z" fill="#ccc" stroke="#111" stroke-width="1.5"/></svg></div>
+                <div class="tb-text">SECTION CTL</div>
+                <div class="tb-on-label">ON</div>
+                <div class="tb-indicator"></div>
+            </div>
+            
+            <div class="toolbar-btn">
+                <div class="tb-icon"><svg viewBox="0 0 24 24"><path d="M3 20h18L16 4H8L3 20z" fill="#ccc" stroke="#111" stroke-width="1.5"/></svg></div>
+                <div class="tb-text">SECTION CTL</div>
+                <div class="tb-indicator"></div>
+            </div>
+            
+            <div class="toolbar-btn on">
+                <div class="tb-icon"><div class="autotrac-pie"></div></div>
+                <div class="tb-text">AUTOTRAC</div>
+                <div class="tb-on-label">ON</div>
+                <div class="tb-indicator"></div>
+            </div>
+            
+            <div class="toolbar-btn">
+                <div class="tb-icon"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9" fill="none" stroke="#111" stroke-width="1.5"/><path d="M12 6v12M8 10l4-4 4 4" stroke="#111" stroke-width="1.5" fill="none"/></svg></div>
+                <div class="tb-text">GUIDANCE</div>
+                <div class="tb-indicator"></div>
+            </div>
+            
+            <div class="toolbar-btn">
+                <div class="tb-icon"><svg viewBox="0 0 24 24"><path d="M5 12h14M15 8l4 4-4 4M9 16l-4-4 4-4" stroke="#111" stroke-width="2" fill="none"/></svg></div>
+                <div class="tb-text">SWAP TRACK</div>
+                <div class="tb-indicator"></div>
+            </div>
+            
+            <div class="toolbar-btn">
+                <div class="tb-icon"><svg viewBox="0 0 24 24"><path d="M12 4v16M8 8v8M16 8v8" stroke="#111" stroke-width="2" stroke-dasharray="3,3" fill="none"/></svg></div>
+                <div class="tb-text">QUICK LINE</div>
+                <div class="tb-indicator"></div>
+            </div>
+            
+            <div class="toolbar-btn">
+                <div class="tb-icon" style="font-weight: 900; font-size: 16px; italic;">ISO</div>
+                <div class="tb-text">ISOBUS VT</div>
+                <div class="tb-indicator"></div>
+            </div>
+            
+            <div class="toolbar-btn">
+                <div class="tb-icon"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="4" fill="none" stroke="#111" stroke-width="2"/><path d="M12 2v3M12 19v3M2 12h3M19 12h3M5 5l2 2M17 17l2 2M19 5l-2 2M5 19l2-2" stroke="#111" stroke-width="2"/></svg></div>
+                <div class="tb-text">DISPLAY</div>
+                <div class="tb-indicator"></div>
+            </div>
+            
+            <div class="toolbar-btn">
+                <div class="tb-icon"><svg viewBox="0 0 24 24"><path d="M14.4 6L14 4H5v17h2v-7h5.6l.4 2h7V6z"/></svg></div>
+                <div class="tb-text">FLAGS</div>
+                <div class="tb-indicator"></div>
+            </div>
+            
+            <div class="toolbar-btn">
+                <div class="tb-icon" style="font-size: 22px; font-weight: bold;">?</div>
+                <div class="tb-text">HELP</div>
+                <div class="tb-indicator"></div>
+            </div>
+            
+            <div class="toolbar-btn menu-btn">
+                <div class="tb-icon"><svg viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/></svg></div>
+                <div class="tb-text">MENU</div>
+                <div class="tb-indicator"></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Leaflet JS -->
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    <script>
+        // Map Setup
+        const map = L.map('isobus-map', {zoomControl: false, attributionControl: false}).setView([-43.03, 146.98], 18);
+        L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', {maxZoom: 19}).addTo(map);
+
+        // Mock Guidance Lines
+        const centerLine = [ [-43.032, 146.98], [-43.028, 146.98] ];
+        const rightYellow = [ [-43.032, 146.9804], [-43.028, 146.9804] ];
+        const curveYellow = [ [-43.029, 146.979], [-43.0305, 146.981], [-43.0315, 146.9805] ];
+        const dashedBlack1 = [ [-43.032, 146.9796], [-43.028, 146.9796] ];
+        const bottomPurple = [ [-43.0315, 146.979], [-43.031, 146.980], [-43.0305, 146.981] ];
+
+        L.polyline(centerLine, {color: 'white', weight: 1}).addTo(map);
+        L.polyline(rightYellow, {color: '#ffe100', weight: 2}).addTo(map);
+        L.polyline(curveYellow, {color: '#ffe100', weight: 2}).addTo(map);
+        L.polyline(dashedBlack1, {color: '#222', weight: 1.5, dashArray: '5, 5'}).addTo(map);
+        L.polyline(bottomPurple, {color: '#d115c4', weight: 2}).addTo(map);
+
+    </script>
+</body>
+</html>

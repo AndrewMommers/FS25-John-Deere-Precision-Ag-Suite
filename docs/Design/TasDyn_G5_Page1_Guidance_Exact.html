@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>G5 Universal Display - Exact Replica</title>
+    <title>G5 Universal Display - Guidance Run Screen (Page 1)</title>
     
     <!-- Leaflet CSS -->
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
@@ -21,7 +21,7 @@
             overflow: hidden;
         }
 
-        /* The Device Bezel */
+        /* Device Bezel */
         .device-bezel {
             width: 1024px;
             height: 600px;
@@ -44,7 +44,13 @@
             padding: 3px 0;
             border-bottom: 2px solid #ffe100;
             letter-spacing: 0.5px;
+            display: flex;
+            justify-content: space-between;
+            padding: 3px 15px;
         }
+        
+        .connection-status { font-size: 11px; color: #ff3b30; }
+        .connection-status.connected { color: #00ff00; }
 
         /* 2. Header Bar */
         .header-bar {
@@ -63,7 +69,8 @@
         .icon-rtk { background: white; color: #495b28; padding: 1px 7px; border-radius: 10px; font-size: 12px; font-weight: 900; }
         
         .nav-arrows { display: flex; align-items: center; gap: 15px; padding-left: 15px; font-size: 20px; font-weight: bold; }
-        .arrow-btn { cursor: pointer; display: flex; align-items: center; justify-content: center; }
+        .arrow-btn { cursor: pointer; display: flex; align-items: center; justify-content: center; opacity: 0.9; }
+        .arrow-btn:hover { opacity: 1; transform: scale(1.1); }
 
         /* 3. Main Workspace */
         .workspace {
@@ -100,12 +107,6 @@
             display: flex;
             justify-content: center;
         }
-        .ct-red-box {
-            position: absolute;
-            background-color: #c41212;
-            width: 25px; height: 100%;
-            left: calc(50% - 37px);
-        }
         .ct-yellow-box {
             position: absolute;
             background-color: #ffe100;
@@ -117,6 +118,15 @@
             box-shadow: 0 1px 3px rgba(0,0,0,0.3);
         }
         .ct-yellow-box span { font-size: 12px; margin-left: 2px; font-weight: normal; }
+
+        .ct-red-box {
+            position: absolute;
+            background-color: #c41212;
+            width: 25px; 
+            height: 100%;
+            left: calc(50% - 12.5px); /* Centers the 25px box */
+            transition: left 0.1s linear; /* Creates the smooth sliding animation */
+        }
         
         .heading-tab {
             position: absolute;
@@ -242,16 +252,18 @@
         .toolbar-btn:last-child { border-right: none; }
         .toolbar-btn:hover { background-color: #ebe7d6; }
         
-        /* The thick active/inactive border at the very bottom */
-        .tb-indicator {
-            position: absolute; bottom: 0; left: 0; width: 100%; height: 4px; background-color: #111;
-        }
+        .tb-indicator { position: absolute; bottom: 0; left: 0; width: 100%; height: 4px; background-color: #111; }
+        .toolbar-btn.on .tb-indicator { background-color: #318220; }
         .toolbar-btn.off .tb-indicator { background-color: #444; }
         
-        /* The "OFF" black box */
         .tb-off-label {
             position: absolute; bottom: 4px; left: 0; width: 100%;
             background-color: #111; color: white; font-size: 9px;
+            text-align: center; padding: 1px 0; font-weight: bold;
+        }
+        .tb-on-label {
+            position: absolute; bottom: 4px; left: 0; width: 100%;
+            background-color: #318220; color: white; font-size: 9px;
             text-align: center; padding: 1px 0; font-weight: bold;
         }
 
@@ -296,14 +308,17 @@
 
     <div class="device-bezel">
         <!-- 1. Top Title -->
-        <div class="title-bar">G5 Universal Display</div>
+        <div class="title-bar">
+            <span>G5 Universal Display</span>
+            <span class="connection-status" id="ws-status">DISCONNECTED</span>
+        </div>
         
         <!-- 2. Header -->
         <div class="header-bar">
             <div class="header-title">Guidance</div>
             <div class="header-status">
                 <div class="status-items">
-                    <span>09:39</span>
+                    <span>10:13</span>
                     <!-- Cloud Icon -->
                     <svg width="20" height="16" viewBox="0 0 24 24" fill="white"><path d="M19.35 10.04C18.67 6.59 15.64 4 12 4 9.11 4 6.6 5.64 5.35 8.04 2.34 8.36 0 10.91 0 14c0 3.31 2.69 6 6 6h13c2.76 0 5-2.24 5-5 0-2.64-2.05-4.78-4.65-4.96z"/><circle cx="19" cy="18" r="4" fill="#1a1a1a"/><text x="17.5" y="21" fill="white" font-size="10" font-weight="bold">!</text></svg>
                     <!-- Sat Icon -->
@@ -324,10 +339,8 @@
             <div class="map-area">
                 <!-- Top HUD -->
                 <div class="cross-track-container">
-                    <div class="ct-ticks">
-                        <div class="ct-red-box"></div>
-                    </div>
-                    <div class="ct-yellow-box">8<span>in</span></div>
+                    <div class="ct-ticks"></div>
+                    <div class="ct-yellow-box">0<span>in</span></div>
                 </div>
                 
                 <div class="heading-tab">
@@ -344,7 +357,8 @@
                     <svg viewBox="0 0 24 24"><path d="M3 3v18h18V3H3zm16 16H5V5h14v14zm-6-8h4v6h-4zM7 11h4v6H7z"/></svg>
                 </div>
                 <div class="map-btn-circle" style="top: 145px;">
-                    <svg viewBox="0 0 24 24"><path d="M12 2L2 7l10 5 10-5-10-5zm0 7.5l-6-3v2l6 3 6-3v-2l-6 3zM2 12l10 5 10-5v2l-10 5-10-5v-2z"/></svg>
+                    <!-- Arrow Up Icon -->
+                    <svg viewBox="0 0 24 24"><path d="M12 4l-8 8h6v8h4v-8h6z"/></svg>
                 </div>
                 <div class="map-btn-circle" style="bottom: 120px;">
                     <svg viewBox="0 0 24 24"><path d="M3 18h18v-2H3v2zm0-5h18v-2H3v2zm0-7v2h18V6H3z"/></svg>
@@ -416,10 +430,10 @@
                         </div>
                         <div class="shift-controls">
                             <div class="sb-btn">
-                                <svg viewBox="0 0 24 24"><path d="M14 7l-5 5 5 5V7z"/><path d="M5 6h2v12H5z"/></svg>
+                                <svg viewBox="0 0 24 24" width="16" height="16"><path d="M14 7l-5 5 5 5V7z"/><path d="M5 6h2v12H5z"/></svg>
                             </div>
                             <div class="sb-btn">
-                                <svg viewBox="0 0 24 24"><path d="M10 7l5 5-5 5V7z"/><path d="M17 6h2v12h-2z"/></svg>
+                                <svg viewBox="0 0 24 24" width="16" height="16"><path d="M10 7l5 5-5 5V7z"/><path d="M17 6h2v12h-2z"/></svg>
                             </div>
                         </div>
                         <div class="sb-value" style="margin-top: 10px;">1.0 in</div>
@@ -457,12 +471,12 @@
                 <div class="tb-indicator"></div>
             </div>
             
-            <div class="toolbar-btn off">
+            <div class="toolbar-btn on">
                 <div class="tb-icon">
-                    <svg viewBox="0 0 24 24"><path d="M3 20h18L16 4H8L3 20z" fill="none" stroke="#111" stroke-width="1.5"/><path d="M8 4v16M12 4v16M16 4v16" stroke="#111" stroke-width="1.5" stroke-dasharray="2,2"/></svg>
+                    <svg viewBox="0 0 24 24"><path d="M3 20h18L16 4H8L3 20z" fill="#ccc" stroke="#111" stroke-width="1.5"/><path d="M8 4v16M12 4v16M16 4v16" stroke="#111" stroke-width="1.5"/></svg>
                 </div>
                 <div class="tb-text">SECTION CTL</div>
-                <div class="tb-off-label">OFF</div>
+                <div class="tb-on-label">ON</div>
                 <div class="tb-indicator"></div>
             </div>
             
@@ -474,10 +488,10 @@
                 <div class="tb-indicator"></div>
             </div>
             
-            <div class="toolbar-btn off">
+            <div class="toolbar-btn on">
                 <div class="tb-icon"><div class="autotrac-pie"></div></div>
                 <div class="tb-text">AUTOTRAC</div>
-                <div class="tb-off-label">OFF</div>
+                <div class="tb-on-label">ON</div>
                 <div class="tb-indicator"></div>
             </div>
             
@@ -558,25 +572,64 @@
             maxZoom: 19
         }).addTo(map);
 
-        // Map is decorative here; the tractor HUD is overlaid centrally via CSS for perfect alignment.
-
-        // Mock Guidance Lines (Yellow, Purple, Black Dashed)
+        // Mock Guidance Lines
         const centerLine = [ [-43.032, 146.98], [-43.028, 146.98] ];
         const rightYellow = [ [-43.032, 146.9804], [-43.028, 146.9804] ];
         const curveYellow = [ [-43.029, 146.979], [-43.0305, 146.981], [-43.0315, 146.9805] ];
         const dashedBlack1 = [ [-43.032, 146.9796], [-43.028, 146.9796] ];
-        const dashedBlack2 = [ [-43.032, 146.9791], [-43.028, 146.9791] ];
-        const dashedBlack3 = [ [-43.032, 146.9786], [-43.028, 146.9786] ];
         const bottomPurple = [ [-43.0315, 146.979], [-43.031, 146.980], [-43.0305, 146.981] ];
 
         L.polyline(centerLine, {color: 'white', weight: 1}).addTo(map);
         L.polyline(rightYellow, {color: '#ffe100', weight: 2}).addTo(map);
         L.polyline(curveYellow, {color: '#ffe100', weight: 2}).addTo(map);
         L.polyline(dashedBlack1, {color: '#222', weight: 1.5, dashArray: '5, 5'}).addTo(map);
-        L.polyline(dashedBlack2, {color: '#222', weight: 1.5, dashArray: '5, 5'}).addTo(map);
-        L.polyline(dashedBlack3, {color: '#222', weight: 1.5, dashArray: '5, 5'}).addTo(map);
         L.polyline(bottomPurple, {color: '#d115c4', weight: 2}).addTo(map);
 
+    // Define the maximum tracking distance to display on the bar (e.g., 36 inches off-track)
+    const MAX_TRACKING_INCHES = 36;
+    
+    // Select the red indicator box and the yellow text value box
+    const xtrackIndicator = document.querySelector('.ct-red-box');
+    const xtrackVal = document.querySelector('.ct-yellow-box');
+
+    /**
+     * Updates the lightbar cross-track error indicator.
+     * @param {number} errorInches - The current cross-track error (negative = left, positive = right)
+     */
+    function updateCrossTrackError(errorInches) {
+        // 1. Update the Text Readout
+        // The John Deere display shows the absolute value rounded to 1 decimal place
+        xtrackVal.innerHTML = `${Math.abs(errorInches).toFixed(1)}<span>in</span>`;
+
+        // 2. Calculate the visual percentage offset
+        // Clamp the error to our MAX_TRACKING_INCHES so the red box doesn't slide off the screen entirely
+        const clampedError = Math.max(-MAX_TRACKING_INCHES, Math.min(MAX_TRACKING_INCHES, errorInches));
+        
+        // Calculate the percentage offset (from -50% to +50% of the bar's width)
+        const percentageOffset = (clampedError / MAX_TRACKING_INCHES) * 50;
+
+        // 3. Apply the CSS left position
+        // The base center is 50%. We subtract half the box width (12.5px) 
+        // and add our dynamic percentage offset.
+        xtrackIndicator.style.left = `calc(50% - 12.5px + ${percentageOffset}%)`;
+    }
+
+    // --- Demo Animation Loop (Simulating Live FS25 Telemetry) ---
+    // This loop simulates a tractor drifting back and forth across the guidance line
+    let simulatedError = 0;
+    let direction = 1;
+
+    setInterval(() => {
+        // Create a smooth sweeping motion between -40 and +40 inches
+        simulatedError += (0.5 * direction);
+        
+        if (simulatedError > 40 || simulatedError < -40) {
+            direction *= -1; // Reverse the drift direction
+        }
+
+        // Push the simulated error to the lightbar function
+        updateCrossTrackError(simulatedError);
+    }, 50); // Runs at 20 FPS for smooth CSS transitions
     </script>
 </body>
 </html>
