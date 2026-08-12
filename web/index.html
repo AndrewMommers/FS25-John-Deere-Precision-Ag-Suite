@@ -143,13 +143,28 @@
         </div>
 
         <div class="card">
-          <div class="label">Guidance</div>
-          <div id="guidanceMode" class="value">Manual</div>
+          <div class="label">AutoTrac</div>
+          <div id="autoTracMode" class="value">Manual</div>
+        </div>
+
+        <div class="card">
+          <div class="label">Field</div>
+          <div id="fieldId" class="value">field_001</div>
+        </div>
+
+        <div class="card">
+          <div class="label">Cross-track error</div>
+          <div id="crossTrackError" class="value">0.0 m</div>
         </div>
 
         <div class="card">
           <div class="label">Position</div>
           <div id="position" class="value">0, 0</div>
+        </div>
+
+        <div class="card">
+          <div class="label">Implement</div>
+          <div id="implementState" class="value">Lowered</div>
         </div>
 
         <div class="card">
@@ -163,7 +178,8 @@
         <canvas id="mapCanvas" width="960" height="260"></canvas>
       </div>
 
-      <button id="toggleGuidance">Toggle Guidance</button>
+      <button id="toggleAutoTrac">Toggle AutoTrac</button>
+      <button id="loadAutoTrac">Load AutoTrac Lines</button>
 
       <div class="log">
         <div class="label">Event Feed</div>

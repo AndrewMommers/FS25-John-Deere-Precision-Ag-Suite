@@ -5,8 +5,100 @@ const { WebSocketServer } = require('ws');
 
 const PORT = process.env.PORT || 8080;
 const webRoot = path.join(__dirname, '..', '..', 'web');
+const dataRoot = path.join(__dirname, '..', '..', 'data');
+const passesRoot = path.join(dataRoot, 'passes');
+const autoTracRoot = path.join(dataRoot, 'autotrac');
+const sessionsRoot = path.join(dataRoot, 'sessions');
+
+function ensureDataDirs() {
+  fs.mkdirSync(passesRoot, { recursive: true });
+  fs.mkdirSync(autoTracRoot, { recursive: true });
+  fs.mkdirSync(sessionsRoot, { recursive: true });
+}
+
+function writeJsonFile(filePath, data) {
+  fs.writeFileSync(filePath, JSON.stringify(data, null, 2));
+}
+
+function savePassRecord(pass) {
+  if (!pass.passId) {
+    pass.passId = `pass_${Date.now()}`;
+  }
+  const filePath = path.join(passesRoot, `${pass.passId}.json`);
+  writeJsonFile(filePath, pass);
+  return pass;
+}
+
+function loadPassRecords() {
+  try {
+    return fs.readdirSync(passesRoot)
+      .filter((name) => name.endsWith('.json'))
+      .map((name) => JSON.parse(fs.readFileSync(path.join(passesRoot, name), 'utf-8')));
+  } catch (error) {
+    return [];
+  }
+}
+
+function generateAutoTracLines(fieldId) {
+  const passes = loadPassRecords().filter((pass) => pass.fieldId === fieldId);
+  return passes.map((pass) => ({
+    lineId: `autotrac_${pass.passId}`,
+    fieldId: pass.fieldId,
+    sourcePassId: pass.passId,
+    points: pass.points || [],
+    widthOffset: pass.implementWidth || 12,
+    heading: pass.points && pass.points.length > 1
+      ? Math.atan2(
+          pass.points[pass.points.length - 1].z - pass.points[0].z,
+          pass.points[pass.points.length - 1].x - pass.points[0].x
+        )
+      : 0
+  }));
+}
+
+ensureDataDirs();
 
 const server = http.createServer((req, res) => {
+  const parsedUrl = new URL(req.url, `http://${req.headers.host}`);
+
+  if (parsedUrl.pathname === '/api/passes') {
+    if (req.method === 'GET') {
+      const passes = loadPassRecords();
+      res.writeHead(200, { 'Content-Type': 'application/json' });
+      res.end(JSON.stringify(passes));
+      return;
+    }
+
+    if (req.method === 'POST') {
+      let body = '';
+      req.on('data', (chunk) => { body += chunk.toString(); });
+      req.on('end', () => {
+        try {
+          const pass = JSON.parse(body);
+          const saved = savePassRecord(pass);
+          res.writeHead(201, { 'Content-Type': 'application/json' });
+          res.end(JSON.stringify(saved));
+        } catch (error) {
+          res.writeHead(400, { 'Content-Type': 'application/json' });
+          res.end(JSON.stringify({ error: 'Invalid JSON body' }));
+        }
+      });
+      return;
+    }
+
+    res.writeHead(405, { 'Content-Type': 'application/json' });
+    res.end(JSON.stringify({ error: 'Method not allowed' }));
+    return;
+  }
+
+  if (parsedUrl.pathname === '/api/autotrac') {
+    const fieldId = parsedUrl.searchParams.get('fieldId') || 'field_001';
+    const lines = generateAutoTracLines(fieldId);
+    res.writeHead(200, { 'Content-Type': 'application/json' });
+    res.end(JSON.stringify(lines));
+    return;
+  }
+
   const url = req.url === '/' ? '/index.html' : req.url;
   const safePath = path.normalize(url).replace(/^\/+/, '');
   const filePath = path.join(webRoot, safePath);
@@ -55,12 +147,25 @@ wss.on('connection', (ws) => {
       const message = JSON.parse(raw.toString());
 
       if (message.type === 'telemetry') {
-        broadcast({
+        const payload = message.payload || {};
+        const telemetry = {
           type: 'telemetry',
           vehicleId: message.vehicleId || 'tractor_01',
-          payload: message.payload || {},
-          timestamp: Date.now()
-        });
+          timestamp: message.timestamp || Date.now(),
+          payload: {
+            x: Number(payload.x || 0),
+            z: Number(payload.z || 0),
+            heading: Number(payload.heading || 0),
+            speed: Number(payload.speed || 0),
+            steering: Number(payload.steering || 0),
+            machineStatus: String(payload.machineStatus || 'unknown'),
+            guidanceMode: String(payload.guidanceMode || 'manual'),
+            fieldId: String(payload.fieldId || 'field_001'),
+            implementState: String(payload.implementState || 'lowered')
+          }
+        };
+
+        broadcast(telemetry);
         return;
       }
 

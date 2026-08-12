@@ -5,9 +5,9 @@
 ![Dashboard Live](https://img.shields.io/badge/Dependency-Dashboard%20Live%20v1.0+-blue?style=for-the-badge)
 ![License](https://img.shields.io/badge/License-MIT-green?style=for-the-badge)
 
-A John Deere Precision Ag-inspired suite for Farming Simulator 25. The project explores a modern guidance and automation ecosystem built around in-game telemetry, Dashboard Live in-cab displays, local machine communication, and a web-based G5-style operator interface that follows the same precision-ag workflow used by Deere systems.
+A John Deere Precision Ag-aligned suite for Farming Simulator 25. The project is designed as a 1:1 ratio simulation of Deere AutoTrac and Operations Center guidance logic within FS25, built around in-game telemetry, Dashboard Live in-cab displays, local machine communication, and a web-based G5-style operator interface.
 
-> Status: this repository is currently in the planning and design phase, structured around a John Deere Precision Ag-style architecture for future implementation work and a modular build sequence.
+> Status: this repository is currently in the planning and design phase, structured around a John Deere Precision Ag architecture for future implementation work and a modular build sequence.
 
 ---
 
@@ -21,14 +21,14 @@ This project aims to recreate the feel of a modern precision agriculture workflo
 - browser-based guidance interface for map and operation monitoring
 - future support for automation, pass tracking, and machine sync
 
-The design is intentionally inspired by real Deere precision-ag systems, but it remains a fan-made simulation concept and not an official product representation.
+The design is intentionally modeled after real Deere precision-ag systems in a 1:1 ratio within the mod's feature scope, while remaining a fan-made simulation concept and not an official product representation.
 
 ---
 
 ## ✅ Planned Feature Areas
 
 - G5 / G5Plus-style display concepts
-- AutoPath-inspired guidance and field pass generation
+- AutoTrac-inspired guidance and field pass generation
 - AutoTrac-inspired steering correction logic
 - headland turn automation and guidance continuity
 - machine sync and leader/follower workflows

@@ -1,0 +1,15 @@
+{
+  "passId": "pass_test_01",
+  "fieldId": "field_001",
+  "implementWidth": 12.5,
+  "points": [
+    {
+      "x": 100,
+      "z": 300
+    },
+    {
+      "x": 110,
+      "z": 310
+    }
+  ]
+}
