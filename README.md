@@ -81,20 +81,29 @@ This repository includes a documentation library for project planning and implem
 ```text
 /
 ├── README.md
+├── LICENSE
 ├── docs/
 │   ├── index.md
 │   ├── ag-tech.md
 │   ├── dev-technical.md
 │   ├── dev-checklist.md
 │   ├── phase-1-backlog.md
-│   └── references.md
-├── engine/
-├── server/
-├── web/
-└── data/
+│   ├── references.md
+│   └── Design/            G5 web terminal mockups (static, unwired)
+├── mod/                   FS25 mod: telemetry export + command polling
+│   ├── modDesc.xml
+│   ├── scripts/
+│   └── xml/
+├── server/                Node.js bridge: file-watches telemetry, serves WebSocket
+│   ├── package.json
+│   └── src/
+├── web/                   Browser dashboard, connects to the bridge over WebSocket
+│   ├── index.html
+│   └── app.js
+└── data/                  fields/ passes/ guidance/ sessions/
 ```
 
-The repo is intentionally structured for future implementation work rather than a fully built production codebase yet.
+`mod/` depends on `FS25_DashboardLive` and `FS25_DashboardLive_VanillaVehicles` for the in-cab G5 display; the bridge and web app work independently of both. See [docs/dev-technical.md §4](docs/dev-technical.md) for how these layers connect.
 
 ---
 

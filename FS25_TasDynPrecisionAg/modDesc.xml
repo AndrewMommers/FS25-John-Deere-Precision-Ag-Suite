@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="utf-8" standalone="no" ?>
+<modDesc descVersion="111">
+    <author>Tasman Dynamics</author>
+    <version>1.0.0.0</version>
+    <title>
+        <en>John Deere Precision Ag Suite</en>
+    </title>
+    <description>
+        <en>Integrates high-fidelity G5 Universal Display telemetry and AutoPath capabilities via an external web terminal.</en>
+    </description>
+
+    <multiplayer supported="true"/>
+
+    <dependencies>
+        <dependency>FS25_DashboardLive</dependency>
+        <dependency>FS25_DashboardLive_VanillaVehicles</dependency>
+    </dependencies>
+
+    <!-- Registers tasDynPrecisionAg and attaches it to every compatible vehicle type (vanilla and modded) at startup -->
+    <extraSourceFiles>
+        <sourceFile filename="scripts/RegisterTasDynSpecialization.lua" />
+    </extraSourceFiles>
+</modDesc>

@@ -1,0 +1,133 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>TasDyn G5 Terminal</title>
+<style>
+  :root {
+    --bg: #0b0f0c;
+    --panel: #121a14;
+    --border: #26331f;
+    --accent: #ffde00;
+    --accent-dim: #7a7300;
+    --green: #367c2b;
+    --text: #e8ede6;
+    --text-dim: #8a978a;
+    --danger: #c73434;
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    background: var(--bg);
+    color: var(--text);
+    font-family: "Segoe UI", system-ui, sans-serif;
+    min-height: 100vh;
+  }
+  header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 12px 20px;
+    background: var(--panel);
+    border-bottom: 2px solid var(--green);
+  }
+  header h1 {
+    font-size: 16px;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    margin: 0;
+    color: var(--accent);
+  }
+  #status {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 13px;
+    color: var(--text-dim);
+  }
+  #status .dot {
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+    background: var(--danger);
+  }
+  #status.connected .dot { background: var(--green); }
+  #status.connected .label::after { content: "Connected"; }
+  #status:not(.connected) .label::after { content: "Disconnected — retrying"; }
+
+  main {
+    padding: 20px;
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+    gap: 14px;
+  }
+  .tile {
+    background: var(--panel);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    padding: 14px 16px;
+  }
+  .tile .label {
+    font-size: 11px;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    color: var(--text-dim);
+    margin-bottom: 6px;
+  }
+  .tile .value {
+    font-size: 28px;
+    font-weight: 600;
+    color: var(--text);
+  }
+  .tile .unit {
+    font-size: 13px;
+    color: var(--text-dim);
+    margin-left: 4px;
+  }
+
+  footer {
+    padding: 20px;
+    display: flex;
+    gap: 10px;
+  }
+  button {
+    background: var(--green);
+    color: var(--text);
+    border: none;
+    border-radius: 4px;
+    padding: 10px 18px;
+    font-size: 13px;
+    cursor: pointer;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+  }
+  button:hover { background: var(--accent-dim); }
+  button.active { background: var(--accent); color: #1a1a1a; }
+</style>
+</head>
+<body>
+  <header>
+    <h1>TasDyn G5 Terminal</h1>
+    <div id="status">
+      <span class="dot"></span>
+      <span class="label"></span>
+    </div>
+  </header>
+
+  <main>
+    <div class="tile"><div class="label">Speed</div><div class="value"><span id="speed">--</span><span class="unit">km/h</span></div></div>
+    <div class="tile"><div class="label">Engine RPM</div><div class="value"><span id="rpm">--</span></div></div>
+    <div class="tile"><div class="label">Heading</div><div class="value"><span id="heading">--</span><span class="unit">°</span></div></div>
+    <div class="tile"><div class="label">Implement</div><div class="value"><span id="implement">--</span></div></div>
+    <div class="tile"><div class="label">Implement Width</div><div class="value"><span id="width">--</span><span class="unit">m</span></div></div>
+    <div class="tile"><div class="label">Cross-Track Error</div><div class="value"><span id="cte">--</span><span class="unit">m</span></div></div>
+  </main>
+
+  <footer>
+    <button id="autotracBtn">AutoTrac: Off</button>
+  </footer>
+
+  <script src="app.js"></script>
+</body>
+</html>
