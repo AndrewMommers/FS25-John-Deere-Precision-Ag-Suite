@@ -96,18 +96,55 @@ This is the data-generation layer. It owns the actual machine state and sends it
 
 ### Core values to export
 
+These values are captured once by the Lua spec and consumed independently by two downstream paths: the bridge (for the web operator interface) and, optionally, Dashboard Live / Dashboard Live Vanilla Vehicles (for the physical in-cab display), via a `tasDyn.*` `DashboardValueType` registration. Neither path depends on the other — see 4.2.
+
+#### Machine / engine
+
 - vehicleId
-- operationMode
+- speed
+- engineRpm
+- gear
+- fuelUsage
+- operatingTime
+
+#### Position and guidance
+
 - position: x, y, z
 - heading
-- speed
-- steering angle
-- implement state
-- implement width
+- steeringAngle
+- guidanceMode
 - guidanceActive
 - crossTrackError
-- machineStatus
+- targetHeading
+- referenceLineId
+
+#### Implement
+
+- implementState (raised / lowered / active)
+- implementWidth
+- implementType
+- attachedImplementIds
+- sectionStates (array, for section control)
+
+#### Precision ag
+
+- fillLevel / targetFillLevel
+- seedType or product type
+- applicationRate
+- fieldNumber
+
+#### Field and operation context
+
+- operationMode
 - currentFieldId
+- currentOperation
+- passId
+- coveragePercent
+
+#### System status
+
+- machineStatus
+- activeWarnings
 
 ### Candidate Lua API
 
@@ -120,30 +157,31 @@ This is the data-generation layer. It owns the actual machine state and sends it
 
 ---
 
-## 4.2 Dashboard Live Integration
+## 4.2 Dashboard Live and Dashboard Live Vanilla Vehicles (Dependency Layer)
 
-Dashboard Live should be treated as the in-cab operating layer. It is not just a decorative overlay; it should present real machine information in a useable operator flow.
+Dashboard Live (DBL) and Dashboard Live Vanilla Vehicles (DBL_VV) are declared mod dependencies, not code this project integrates into. DBL_VV already ships working G4 and G5 in-cab display geometry and XML for the John Deere 6M/6R/7R/8R/8RT/8RX/9R/9RX/S7 lineup, including G5 aPillar and console displays with ISOBUS and RTK pages. That is the physical in-cab hardware layer; it does not need to be rebuilt.
 
-### Required dashboard widgets
+### How data actually flows
 
-- speed
-- heading
-- steering angle
-- guidance mode
-- implement status
-- field activity
-- coverage progress
-- vehicle status
+DBL is a one-way consumer. It reads live vehicle spec state through its own `DashboardValueType` registrations and paints it onto in-cab display nodes. It exposes no API to read data back out, and no public mechanism for other mods to register new commands into its own namespace.
+
+Because of this, the `tasDynPrecisionAg` Lua spec does not route telemetry through DBL. It reads the same underlying vehicle and implement state independently — plus data DBL has no concept of, such as cross-track error, guidance mode, and pass coverage — and sends it to the bridge for the web operator interface. DBL and the web app are two parallel consumers of the same base game state, not a pipeline.
+
+### Optional in-cab extension
+
+The Lua spec may additionally register its own `tasDyn.*` `DashboardValueType` (via `onRegisterDashboardValueTypes`), which lets DBL_VV's existing G5 display compounds render TasDyn-specific values (for example `<dashboard valueType="tasDyn.guidance" cmd="crossTrackError" .../>`) without building new i3d geometry. This is an enhancement to the physical display, not a requirement for the web app to function.
 
 ### Integration rule
 
-Dashboard Live should consume values from the Lua layer and present them clearly, but it should not be responsible for calculating guidance or pass logic. That work belongs to the lower layers.
+The bridge and web app must work correctly whether or not DBL / DBL_VV are installed. DBL enriches the in-cab experience; it is never a dependency of the guidance, pass-tracking, or web-rendering logic.
 
 ---
 
 ## 4.3 Local Bridge / Service Layer
 
 The bridge is the connection point between game telemetry and the browser UI. It is analogous to the machine-data communication layer in real Deere systems.
+
+Telemetry reaching the bridge originates directly from the `tasDynPrecisionAg` Lua spec's own read of vehicle and implement state (see 4.1). It is not routed through or dependent on Dashboard Live.
 
 ### Responsibilities
 
@@ -196,20 +234,32 @@ The bridge is the connection point between game telemetry and the browser UI. It
 
 ## 4.4 Frontend Operator Interface
 
-This layer should feel like a Deere display and field operations page rather than a generic telemetry dashboard.
+The web app is a full-fidelity recreation of the John Deere G5 Command Center and G5 Universal Display software — not a simplified telemetry dashboard. The visual target is already defined in `docs/Design/`:
+
+- `TasDyn_G5_Command.html` — Command Center overview
+- `TasDyn_G5_Master_Display.html` — master display shell, pages 1-6
+- `TasDyn_G5_Page1_Guidance_Exact.html` — guidance run screen
+- `TasDyn_G5_Page2_Tillage.html` — tillage run screen
+- `TasDyn_G5_Page3_AirSeeder.html` — air seeder run screen
+- `TasDyn_G5_Page4_RateController.html` — rate controller run screen
+- `TasDyn_G5_Page5_Terminal1.html` — terminal run screen
+- `TasDyn_G5_Page6_ISOBUSRunPage.html` — ISOBUS run page
+
+These mockups are static; they contain no live data bindings yet. Wiring them to the bridge's WebSocket stream is frontend implementation work, not a redesign.
 
 ### Functional areas
 
 - field map and machine tracker
 - guidance line and current path overlay
 - pass history and coverage display
+- run-page switching matching the G5 page set above (guidance, tillage, air seeder, rate controller, ISOBUS, terminal)
 - machine status and alerts
 - configuration controls for guidance and sync
 - field record review
 
 ### Recommended frontend stack
 
-- HTML/CSS/JS for the initial prototype
+- HTML/CSS/JS for the initial prototype, building directly on the existing `docs/Design/` markup
 - more structured frontend later if needed
 - map rendering for the field view
 - WebSocket client for live updates

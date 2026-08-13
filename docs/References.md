@@ -36,6 +36,9 @@
 - **John Deere G5 Universal Display Documentation:** Helpful for understanding display layout ideas, operation logic, and feature concepts that can inspire the front-end design.
   - Link: https://www.deere.com.au/en/technology-products/precision-ag-technology/guidance/g5-universal-display/
 
+- ** John Deere G5 Command Center Documentation:**
+  - link: https://www.deere.com.au/en/technology-products/precision-ag-technology/guidance/g5-commandcenter/
+
 ## 4. Architectural Notes for This Project
 
 This suite is intended to use a hybrid multi-layer architecture:

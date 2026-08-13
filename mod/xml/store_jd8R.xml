@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="utf-8" standalone="no" ?>
+<vehicle type="tasDynTractor" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="$dataS/scripts/vehicles/Vehicle.xsd">
+    <!-- Base Tractor Config Data Goes Here -->
+
+    <configurations>
+        <!-- Custom Shop Item -->
+        <precisionAg>
+            <configuration name="$l10n_precisionAg_standard" price="0">
+                <!-- Standard integrated displays -->
+            </configuration>
+            <configuration name="$l10n_precisionAg_g5Plus" price="14500">
+                <!-- Optional: Swap nodes if you have custom 3D models -->
+                <!-- <objectChange node="starFire_7500_node" visibilityActive="true" /> -->
+                <!-- <objectChange node="g5_display_node" visibilityActive="true" /> -->
+            </configuration>
+        </precisionAg>
+    </configurations>
+
+</vehicle>

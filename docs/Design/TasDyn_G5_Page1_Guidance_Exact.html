@@ -1,0 +1,635 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>G5 Universal Display - Guidance Run Screen (Page 1)</title>
+    
+    <!-- Leaflet CSS -->
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
+    
+    <style>
+        /* Base Reset & Fonts */
+        * { box-sizing: border-box; margin: 0; padding: 0; user-select: none; }
+        body { 
+            background-color: #1a1a1a; 
+            font-family: "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            overflow: hidden;
+        }
+
+        /* Device Bezel */
+        .device-bezel {
+            width: 1024px;
+            height: 600px;
+            background-color: #000;
+            border: 6px solid #222;
+            border-radius: 4px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.8);
+            display: flex;
+            flex-direction: column;
+            position: relative;
+        }
+
+        /* 1. Very Top Title Bar */
+        .title-bar {
+            background-color: #275623;
+            color: white;
+            text-align: center;
+            font-weight: 700;
+            font-size: 13px;
+            padding: 3px 0;
+            border-bottom: 2px solid #ffe100;
+            letter-spacing: 0.5px;
+            display: flex;
+            justify-content: space-between;
+            padding: 3px 15px;
+        }
+        
+        .connection-status { font-size: 11px; color: #ff3b30; }
+        .connection-status.connected { color: #00ff00; }
+
+        /* 2. Header Bar */
+        .header-bar {
+            background-color: #495b28;
+            color: white;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 0 10px 0 15px;
+            height: 42px;
+        }
+        .header-title { font-size: 22px; font-weight: 700; letter-spacing: 0.5px; }
+        .header-status { display: flex; align-items: center; height: 100%; }
+        
+        .status-items { display: flex; align-items: center; gap: 12px; font-weight: 700; font-size: 15px; padding-right: 15px; border-right: 1px solid #7a8a5b; height: 100%; }
+        .icon-rtk { background: white; color: #495b28; padding: 1px 7px; border-radius: 10px; font-size: 12px; font-weight: 900; }
+        
+        .nav-arrows { display: flex; align-items: center; gap: 15px; padding-left: 15px; font-size: 20px; font-weight: bold; }
+        .arrow-btn { cursor: pointer; display: flex; align-items: center; justify-content: center; opacity: 0.9; }
+        .arrow-btn:hover { opacity: 1; transform: scale(1.1); }
+
+        /* 3. Main Workspace */
+        .workspace {
+            display: flex;
+            flex: 1;
+            position: relative;
+            height: calc(100% - 110px);
+        }
+
+        /* --- Map Area & Overlays --- */
+        .map-area {
+            flex: 1;
+            position: relative;
+            background-color: #8fa3b3;
+            overflow: hidden;
+        }
+        
+        #map { width: 100%; height: 100%; z-index: 1; }
+
+        /* Cross Track HUD */
+        .cross-track-container {
+            position: absolute;
+            top: 0; left: 0; right: 0;
+            height: 30px;
+            background-color: rgba(255, 255, 255, 0.95);
+            z-index: 1000;
+            display: flex;
+            border-bottom: 1px solid #999;
+        }
+        .ct-ticks {
+            flex: 1;
+            background-image: repeating-linear-gradient(to right, transparent, transparent 9px, #ccc 10px);
+            position: relative;
+            display: flex;
+            justify-content: center;
+        }
+        .ct-yellow-box {
+            position: absolute;
+            background-color: #ffe100;
+            color: black; font-weight: bold; font-size: 18px;
+            height: 100%; width: 50px;
+            left: 50%; transform: translateX(-50%);
+            display: flex; align-items: center; justify-content: center;
+            border-left: 1px solid #666; border-right: 1px solid #666;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.3);
+        }
+        .ct-yellow-box span { font-size: 12px; margin-left: 2px; font-weight: normal; }
+
+        .ct-red-box {
+            position: absolute;
+            background-color: #c41212;
+            width: 25px; 
+            height: 100%;
+            left: calc(50% - 12.5px); /* Centers the 25px box */
+            transition: left 0.1s linear; /* Creates the smooth sliding animation */
+        }
+        
+        .heading-tab {
+            position: absolute;
+            top: 30px; left: 50%;
+            transform: translateX(-50%);
+            background-color: rgba(50, 50, 50, 0.85);
+            color: white;
+            z-index: 1000;
+            display: flex; flex-direction: column; align-items: center;
+            padding: 2px 8px;
+            border-bottom-left-radius: 4px; border-bottom-right-radius: 4px;
+            border: 1px solid #777; border-top: none;
+            font-size: 13px; font-weight: bold;
+            min-width: 48px;
+        }
+        .heading-tab .line { background: #aaa; height: 1px; width: 100%; margin: 2px 0; }
+
+        /* Left Floating Elements */
+        .shank-label {
+            position: absolute; top: 40px; left: 0; z-index: 1000;
+            background-color: rgba(60,60,60,0.7); color: white;
+            padding: 2px 8px; font-size: 14px;
+        }
+        .red-white-arrow {
+            position: absolute; top: 65px; left: 10px; z-index: 1000;
+            width: 30px; height: 15px; background: linear-gradient(to right, #d32f2f 50%, white 50%);
+            clip-path: polygon(10% 0, 100% 0, 90% 100%, 0 100%);
+            border: 1px solid #fff;
+        }
+
+        .map-btn-circle {
+            position: absolute; left: 10px; z-index: 1000;
+            width: 36px; height: 36px; border-radius: 50%;
+            background-color: rgba(50,50,50,0.7);
+            border: 2px solid rgba(255,255,255,0.6);
+            display: flex; justify-content: center; align-items: center;
+            cursor: pointer;
+        }
+        .map-btn-circle svg { width: 20px; height: 20px; fill: white; }
+
+        /* Bottom Left Flags & Logos */
+        .flag-circle {
+            position: absolute; bottom: 10px; z-index: 1001;
+            width: 70px; height: 70px; border-radius: 50%;
+            background-color: white; border: 3px solid #333;
+            display: flex; justify-content: center; align-items: center;
+            box-shadow: 2px 2px 5px rgba(0,0,0,0.3);
+        }
+        .flag-circle svg { width: 40px; height: 40px; fill: #111; }
+        
+        .google-logo { position: absolute; bottom: 25px; left: 15px; z-index: 1002; color: white; font-weight: bold; font-size: 18px; text-shadow: 1px 1px 2px black; }
+        .map-data { position: absolute; bottom: 5px; right: 5px; z-index: 1000; color: white; font-size: 10px; background: rgba(0,0,0,0.5); padding: 1px 4px; }
+
+        /* Right Floating Elements */
+        .map-btn-right {
+            position: absolute; right: 10px; z-index: 1000;
+            width: 34px; height: 34px; border-radius: 50%;
+            background-color: rgba(50,50,50,0.7);
+            border: 2px solid rgba(255,255,255,0.6);
+            display: flex; justify-content: center; align-items: center;
+        }
+        .map-btn-right svg { width: 18px; height: 18px; fill: white; }
+
+        .pin-icon {
+            position: absolute; top: 120px; left: 220px; z-index: 1000;
+            width: 50px; height: 60px;
+        }
+
+        /* --- Right Sidebar --- */
+        .sidebar {
+            width: 200px;
+            background-color: #e8e4d3;
+            border-left: 2px solid #333;
+            display: flex; flex-direction: column;
+            z-index: 10;
+        }
+        
+        .sb-section { border-bottom: 2px solid #fff; display: flex; flex-direction: column; }
+        .sb-header {
+            background-color: #473e35; color: white;
+            font-size: 10px; font-weight: bold;
+            padding: 3px 0; text-align: center;
+        }
+        .sb-header-light { background-color: #dcd7c6; color: #444; }
+        
+        .sb-content { padding: 8px 10px; flex: 1; }
+        .sb-title { font-size: 14px; font-weight: bold; color: #111; margin-bottom: 6px; }
+        
+        .sb-btn {
+            background: linear-gradient(to bottom, #ffffff, #dcdcdc);
+            border: 1px solid #777;
+            border-radius: 4px;
+            padding: 6px; text-align: center;
+            font-weight: 700; font-size: 13px; color: #111;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+            cursor: pointer; width: 100%;
+        }
+        .sb-btn:active { background: #dcdcdc; }
+        
+        .sb-value { font-size: 15px; font-weight: bold; color: #111; margin-top: 8px; line-height: 1; }
+        .sb-label { font-size: 11px; color: #555; }
+        
+        .shift-controls { display: flex; gap: 5px; margin-top: 4px; }
+        .shift-controls .sb-btn { flex: 1; padding: 4px; display: flex; justify-content: center; align-items: center; height: 32px;}
+        .shift-controls svg { width: 16px; height: 16px; fill: #111; }
+
+        /* --- Bottom Toolbar --- */
+        .bottom-toolbar {
+            height: 65px;
+            background-color: #ded9c6;
+            display: flex;
+            border-top: 2px solid #333;
+        }
+        
+        .toolbar-btn {
+            flex: 1;
+            border-right: 1px solid #b5b1a1;
+            display: flex; flex-direction: column; justify-content: flex-start; align-items: center;
+            font-size: 9px; font-weight: 700; color: #111;
+            position: relative; cursor: pointer;
+            padding-top: 6px;
+        }
+        .toolbar-btn:last-child { border-right: none; }
+        .toolbar-btn:hover { background-color: #ebe7d6; }
+        
+        .tb-indicator { position: absolute; bottom: 0; left: 0; width: 100%; height: 4px; background-color: #111; }
+        .toolbar-btn.on .tb-indicator { background-color: #318220; }
+        .toolbar-btn.off .tb-indicator { background-color: #444; }
+        
+        .tb-off-label {
+            position: absolute; bottom: 4px; left: 0; width: 100%;
+            background-color: #111; color: white; font-size: 9px;
+            text-align: center; padding: 1px 0; font-weight: bold;
+        }
+        .tb-on-label {
+            position: absolute; bottom: 4px; left: 0; width: 100%;
+            background-color: #318220; color: white; font-size: 9px;
+            text-align: center; padding: 1px 0; font-weight: bold;
+        }
+
+        .tb-icon { height: 26px; width: 26px; display: flex; justify-content: center; align-items: center; margin-bottom: 2px; }
+        .tb-icon svg { width: 100%; height: 100%; fill: #111; }
+        .tb-text { text-align: center; line-height: 1.1; padding: 0 2px;}
+
+        /* Specific Icons */
+        .autotrac-pie {
+            width: 22px; height: 22px; border-radius: 50%;
+            background: conic-gradient(white 0 90deg, white 90deg 180deg, #4287f5 180deg 270deg, white 270deg 360deg);
+            border: 1px solid #111;
+            position: relative;
+        }
+        .autotrac-pie::before { content: ''; position: absolute; top: 0; bottom: 0; left: 50%; width: 1px; background: #111; }
+        .autotrac-pie::after { content: ''; position: absolute; left: 0; right: 0; top: 50%; height: 1px; background: #111; }
+
+        .menu-btn { background-color: #318220; color: white; }
+        .menu-btn .tb-icon svg { fill: white; }
+        .menu-btn .tb-indicator { background-color: #1d4d12; }
+        .menu-btn:hover { background-color: #3b9c26; }
+
+        /* Custom Tractor HUD Overlay */
+        .hud-tractor {
+            position: absolute;
+            top: 50%; left: 50%;
+            transform: translate(-50%, -50%);
+            z-index: 500;
+            pointer-events: none;
+            display: flex; flex-direction: column; align-items: center;
+        }
+        .hud-line-fwd { width: 2px; height: 150px; background-color: white; margin-bottom: -5px; }
+        .hud-body { width: 18px; height: 24px; background-color: #367C2B; border-radius: 3px; position: relative; z-index: 2; }
+        .hud-wheel-l { position: absolute; left: -8px; top: 8px; width: 6px; height: 14px; background: #222; border-radius: 1px; box-shadow: 2px 0 0 #222; }
+        .hud-wheel-r { position: absolute; right: -8px; top: 8px; width: 6px; height: 14px; background: #222; border-radius: 1px; box-shadow: -2px 0 0 #222; }
+        .hud-link { width: 4px; height: 30px; background-color: #55ff00; position: relative; z-index: 1; margin-top: -5px; }
+        .hud-boom { width: 180px; height: 4px; background-color: #55ff00; }
+
+    </style>
+</head>
+<body>
+
+    <div class="device-bezel">
+        <!-- 1. Top Title -->
+        <div class="title-bar">
+            <span>G5 Universal Display</span>
+            <span class="connection-status" id="ws-status">DISCONNECTED</span>
+        </div>
+        
+        <!-- 2. Header -->
+        <div class="header-bar">
+            <div class="header-title">Guidance</div>
+            <div class="header-status">
+                <div class="status-items">
+                    <span>10:13</span>
+                    <!-- Cloud Icon -->
+                    <svg width="20" height="16" viewBox="0 0 24 24" fill="white"><path d="M19.35 10.04C18.67 6.59 15.64 4 12 4 9.11 4 6.6 5.64 5.35 8.04 2.34 8.36 0 10.91 0 14c0 3.31 2.69 6 6 6h13c2.76 0 5-2.24 5-5 0-2.64-2.05-4.78-4.65-4.96z"/><circle cx="19" cy="18" r="4" fill="#1a1a1a"/><text x="17.5" y="21" fill="white" font-size="10" font-weight="bold">!</text></svg>
+                    <!-- Sat Icon -->
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="white"><path d="M21 3L3 10.53v.98l6.84 2.65L12.48 21h.98L21 3z"/></svg>
+                    <span class="icon-rtk">RTK</span>
+                </div>
+                <div class="nav-arrows">
+                    <div class="arrow-btn"><svg width="24" height="24" viewBox="0 0 24 24" fill="white"><path d="M20 11H7.83l5.59-5.59L12 4l-8 8 8 8 1.41-1.41L7.83 13H20v-2z"/></svg></div>
+                    <div class="arrow-btn"><svg width="24" height="24" viewBox="0 0 24 24" fill="white"><path d="M12 4l-1.41 1.41L16.17 11H4v2h12.17l-5.58 5.59L12 20l8-8z"/></svg></div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 3. Workspace -->
+        <div class="workspace">
+            
+            <!-- Map Area -->
+            <div class="map-area">
+                <!-- Top HUD -->
+                <div class="cross-track-container">
+                    <div class="ct-ticks"></div>
+                    <div class="ct-yellow-box">0<span>in</span></div>
+                </div>
+                
+                <div class="heading-tab">
+                    E 90&deg;
+                    <div class="line"></div>
+                    0
+                </div>
+
+                <!-- Left Floating Elements -->
+                <div class="shank-label">Shank</div>
+                <div class="red-white-arrow"></div>
+                
+                <div class="map-btn-circle" style="top: 100px;">
+                    <svg viewBox="0 0 24 24"><path d="M3 3v18h18V3H3zm16 16H5V5h14v14zm-6-8h4v6h-4zM7 11h4v6H7z"/></svg>
+                </div>
+                <div class="map-btn-circle" style="top: 145px;">
+                    <!-- Arrow Up Icon -->
+                    <svg viewBox="0 0 24 24"><path d="M12 4l-8 8h6v8h4v-8h6z"/></svg>
+                </div>
+                <div class="map-btn-circle" style="bottom: 120px;">
+                    <svg viewBox="0 0 24 24"><path d="M3 18h18v-2H3v2zm0-5h18v-2H3v2zm0-7v2h18V6H3z"/></svg>
+                </div>
+
+                <!-- Bottom Left Flags -->
+                <div class="flag-circle" style="left: 10px; z-index: 1001;">
+                    <svg viewBox="0 0 24 24"><path d="M14.4 6L14 4H5v17h2v-7h5.6l.4 2h7V6z"/></svg>
+                </div>
+                <div class="flag-circle" style="left: 70px; z-index: 1000;">
+                    <svg viewBox="0 0 24 24"><path d="M14.4 6L14 4H5v17h2v-7h5.6l.4 2h7V6z"/></svg>
+                </div>
+                <div class="google-logo">Google</div>
+
+                <!-- Right Floating Elements -->
+                <div class="map-btn-right" style="top: 50px;">
+                    <svg viewBox="0 0 24 24"><path d="M14 4l2.29 2.29-2.88 2.88 1.42 1.42 2.88-2.88L20 10V4zm-4 0H4v6l2.29-2.29 4.71 4.7V20h2v-8.41l-5.29-5.3z"/></svg>
+                </div>
+                <div class="map-btn-right" style="bottom: 75px;">
+                    <svg viewBox="0 0 24 24"><path d="M19 3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm-2 15h-4v-4h4v4zm0-6h-4V8h4v4zM11 18H7v-4h4v4zm0-6H7V8h4v4z"/></svg>
+                </div>
+                <div class="map-btn-right" style="bottom: 35px;">
+                    <svg viewBox="0 0 24 24"><path d="M14.4 6L14 4H5v17h2v-7h5.6l.4 2h7V6z"/></svg>
+                </div>
+
+                <!-- Map Pin -->
+                <div class="pin-icon">
+                    <svg viewBox="0 0 24 24" fill="white" stroke="#333" stroke-width="1.5">
+                        <path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7z"/>
+                        <path d="M12 11.5c-1.38 0-2.5-1.12-2.5-2.5s1.12-2.5 2.5-2.5 2.5 1.12 2.5 2.5-1.12 2.5-2.5 2.5z" fill="#333"/>
+                        <path d="M12 8v3l2 1" stroke="white" stroke-width="1.5" fill="none"/>
+                    </svg>
+                </div>
+
+                <!-- Center Tractor HUD Over Map -->
+                <div class="hud-tractor">
+                    <div class="hud-line-fwd"></div>
+                    <div class="hud-body">
+                        <div class="hud-wheel-l"></div>
+                        <div class="hud-wheel-r"></div>
+                    </div>
+                    <div class="hud-link"></div>
+                    <div class="hud-boom"></div>
+                </div>
+
+                <div class="map-data">Map data &copy;2026</div>
+
+                <!-- Leaflet Container -->
+                <div id="map"></div>
+            </div>
+
+            <!-- Right Sidebar -->
+            <div class="sidebar">
+                
+                <div class="sb-section" style="flex: 1.2;">
+                    <div class="sb-header">Guidance</div>
+                    <div class="sb-content">
+                        <div class="sb-title">Planting line ...</div>
+                        <div class="sb-btn">Set Track</div>
+                        
+                        <div class="sb-value">50.299ft</div>
+                        <div class="sb-label">Track Spacing</div>
+                    </div>
+                    
+                    <div class="sb-header sb-header-light">Shift Track</div>
+                    <div class="sb-content">
+                        <div class="sb-btn" style="padding: 2px;">
+                            <svg width="24" height="24" viewBox="0 0 24 24"><path d="M6 16h4v4h4v-4h4v-4h-4V8h-4v4H6v4zm-2-8v8h2v-8H4zm14 0v8h2v-8h-2z" fill="#111"/></svg>
+                        </div>
+                        <div class="shift-controls">
+                            <div class="sb-btn">
+                                <svg viewBox="0 0 24 24" width="16" height="16"><path d="M14 7l-5 5 5 5V7z"/><path d="M5 6h2v12H5z"/></svg>
+                            </div>
+                            <div class="sb-btn">
+                                <svg viewBox="0 0 24 24" width="16" height="16"><path d="M10 7l5 5-5 5V7z"/><path d="M17 6h2v12h-2z"/></svg>
+                            </div>
+                        </div>
+                        <div class="sb-value" style="margin-top: 10px;">1.0 in</div>
+                        <div class="sb-label">Shift Increment</div>
+                    </div>
+                </div>
+
+                <div class="sb-section" style="flex: 0.4;">
+                    <div class="sb-header">Location</div>
+                    <div class="sb-content">
+                        <div class="sb-title">5 South</div>
+                        <div class="sb-label">Field</div>
+                    </div>
+                </div>
+                
+            </div>
+        </div>
+
+        <!-- 4. Bottom Toolbar -->
+        <div class="bottom-toolbar">
+            <div class="toolbar-btn">
+                <div class="tb-icon">
+                    <svg viewBox="0 0 24 24"><path d="M4 6h16v2H4zm0 5h16v2H4zm0 5h16v2H4z"/><path d="M2.5 5.5L4 7l2.5-2.5L5 3 2.5 5.5zm0 5L4 12l2.5-2.5L5 8l-2.5 2.5zm0 5L4 17l2.5-2.5L5 13l-2.5 2.5z"/></svg>
+                </div>
+                <div class="tb-text">SETUP</div>
+                <div class="tb-indicator"></div>
+            </div>
+            
+            <div class="toolbar-btn off">
+                <div class="tb-icon">
+                    <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="8" stroke="#111" stroke-width="2" fill="#d3d3d3"/><circle cx="12" cy="12" r="4" fill="#999"/></svg>
+                </div>
+                <div class="tb-text">WORK</div>
+                <div class="tb-off-label">OFF</div>
+                <div class="tb-indicator"></div>
+            </div>
+            
+            <div class="toolbar-btn on">
+                <div class="tb-icon">
+                    <svg viewBox="0 0 24 24"><path d="M3 20h18L16 4H8L3 20z" fill="#ccc" stroke="#111" stroke-width="1.5"/><path d="M8 4v16M12 4v16M16 4v16" stroke="#111" stroke-width="1.5"/></svg>
+                </div>
+                <div class="tb-text">SECTION CTL</div>
+                <div class="tb-on-label">ON</div>
+                <div class="tb-indicator"></div>
+            </div>
+            
+            <div class="toolbar-btn">
+                <div class="tb-icon">
+                    <svg viewBox="0 0 24 24"><path d="M3 20h18L16 4H8L3 20z" fill="#ccc" stroke="#111" stroke-width="1.5"/><path d="M8 4v16M12 4v16M16 4v16" stroke="#111" stroke-width="1.5"/></svg>
+                </div>
+                <div class="tb-text">SECTION CTL</div>
+                <div class="tb-indicator"></div>
+            </div>
+            
+            <div class="toolbar-btn on">
+                <div class="tb-icon"><div class="autotrac-pie"></div></div>
+                <div class="tb-text">AUTOTRAC</div>
+                <div class="tb-on-label">ON</div>
+                <div class="tb-indicator"></div>
+            </div>
+            
+            <div class="toolbar-btn">
+                <div class="tb-icon">
+                    <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9" fill="none" stroke="#111" stroke-width="1.5"/><path d="M12 6v12M8 10l4-4 4 4" stroke="#111" stroke-width="1.5" fill="none"/></svg>
+                </div>
+                <div class="tb-text">GUIDANCE</div>
+                <div class="tb-indicator"></div>
+            </div>
+            
+            <div class="toolbar-btn">
+                <div class="tb-icon">
+                    <svg viewBox="0 0 24 24"><path d="M5 12h14M15 8l4 4-4 4M9 16l-4-4 4-4" stroke="#111" stroke-width="2" fill="none"/></svg>
+                </div>
+                <div class="tb-text">SWAP TRACK</div>
+                <div class="tb-indicator"></div>
+            </div>
+            
+            <div class="toolbar-btn">
+                <div class="tb-icon">
+                    <svg viewBox="0 0 24 24"><path d="M12 4v16M8 8v8M16 8v8" stroke="#111" stroke-width="2" stroke-dasharray="3,3" fill="none"/></svg>
+                </div>
+                <div class="tb-text">QUICK LINE</div>
+                <div class="tb-indicator"></div>
+            </div>
+            
+            <div class="toolbar-btn">
+                <div class="tb-icon" style="font-weight: 900; font-size: 16px; letter-spacing: -1px; font-style: italic;">ISO</div>
+                <div class="tb-text">ISOBUS VT</div>
+                <div class="tb-indicator"></div>
+            </div>
+            
+            <div class="toolbar-btn">
+                <div class="tb-icon">
+                    <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="4" fill="none" stroke="#111" stroke-width="2"/><path d="M12 2v3M12 19v3M2 12h3M19 12h3M5 5l2 2M17 17l2 2M19 5l-2 2M5 19l2-2" stroke="#111" stroke-width="2"/></svg>
+                </div>
+                <div class="tb-text">DISPLAY</div>
+                <div class="tb-indicator"></div>
+            </div>
+            
+            <div class="toolbar-btn">
+                <div class="tb-icon">
+                    <svg viewBox="0 0 24 24"><path d="M14.4 6L14 4H5v17h2v-7h5.6l.4 2h7V6z"/></svg>
+                </div>
+                <div class="tb-text">FLAGS</div>
+                <div class="tb-indicator"></div>
+            </div>
+            
+            <div class="toolbar-btn">
+                <div class="tb-icon" style="font-size: 22px; font-weight: bold;">?</div>
+                <div class="tb-text">HELP</div>
+                <div class="tb-indicator"></div>
+            </div>
+            
+            <div class="toolbar-btn menu-btn">
+                <div class="tb-icon">
+                    <svg viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/></svg>
+                </div>
+                <div class="tb-text">MENU</div>
+                <div class="tb-indicator"></div>
+            </div>
+        </div>
+
+    </div>
+
+    <!-- Leaflet JS -->
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    <script>
+        // Initialize Map
+        const map = L.map('map', {
+            zoomControl: false,
+            attributionControl: false
+        }).setView([-43.03, 146.98], 18); 
+
+        // Add High-Res Esri Satellite Layer (Matches the image's satellite view)
+        L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', {
+            maxZoom: 19
+        }).addTo(map);
+
+        // Mock Guidance Lines
+        const centerLine = [ [-43.032, 146.98], [-43.028, 146.98] ];
+        const rightYellow = [ [-43.032, 146.9804], [-43.028, 146.9804] ];
+        const curveYellow = [ [-43.029, 146.979], [-43.0305, 146.981], [-43.0315, 146.9805] ];
+        const dashedBlack1 = [ [-43.032, 146.9796], [-43.028, 146.9796] ];
+        const bottomPurple = [ [-43.0315, 146.979], [-43.031, 146.980], [-43.0305, 146.981] ];
+
+        L.polyline(centerLine, {color: 'white', weight: 1}).addTo(map);
+        L.polyline(rightYellow, {color: '#ffe100', weight: 2}).addTo(map);
+        L.polyline(curveYellow, {color: '#ffe100', weight: 2}).addTo(map);
+        L.polyline(dashedBlack1, {color: '#222', weight: 1.5, dashArray: '5, 5'}).addTo(map);
+        L.polyline(bottomPurple, {color: '#d115c4', weight: 2}).addTo(map);
+
+    // Define the maximum tracking distance to display on the bar (e.g., 36 inches off-track)
+    const MAX_TRACKING_INCHES = 36;
+    
+    // Select the red indicator box and the yellow text value box
+    const xtrackIndicator = document.querySelector('.ct-red-box');
+    const xtrackVal = document.querySelector('.ct-yellow-box');
+
+    /**
+     * Updates the lightbar cross-track error indicator.
+     * @param {number} errorInches - The current cross-track error (negative = left, positive = right)
+     */
+    function updateCrossTrackError(errorInches) {
+        // 1. Update the Text Readout
+        // The John Deere display shows the absolute value rounded to 1 decimal place
+        xtrackVal.innerHTML = `${Math.abs(errorInches).toFixed(1)}<span>in</span>`;
+
+        // 2. Calculate the visual percentage offset
+        // Clamp the error to our MAX_TRACKING_INCHES so the red box doesn't slide off the screen entirely
+        const clampedError = Math.max(-MAX_TRACKING_INCHES, Math.min(MAX_TRACKING_INCHES, errorInches));
+        
+        // Calculate the percentage offset (from -50% to +50% of the bar's width)
+        const percentageOffset = (clampedError / MAX_TRACKING_INCHES) * 50;
+
+        // 3. Apply the CSS left position
+        // The base center is 50%. We subtract half the box width (12.5px) 
+        // and add our dynamic percentage offset.
+        xtrackIndicator.style.left = `calc(50% - 12.5px + ${percentageOffset}%)`;
+    }
+
+    // --- Demo Animation Loop (Simulating Live FS25 Telemetry) ---
+    // This loop simulates a tractor drifting back and forth across the guidance line
+    let simulatedError = 0;
+    let direction = 1;
+
+    setInterval(() => {
+        // Create a smooth sweeping motion between -40 and +40 inches
+        simulatedError += (0.5 * direction);
+        
+        if (simulatedError > 40 || simulatedError < -40) {
+            direction *= -1; // Reverse the drift direction
+        }
+
+        // Push the simulated error to the lightbar function
+        updateCrossTrackError(simulatedError);
+    }, 50); // Runs at 20 FPS for smooth CSS transitions
+    </script>
+</body>
+</html>
