@@ -168,15 +168,13 @@
         .hud-link { width: 4px; height: 30px; background-color: #55ff00; position: relative; z-index: 1; margin-top: -5px; }
         .hud-boom { width: 180px; height: 4px; background-color: #55ff00; }
 
-        /* Machine Monitor Layout Styles (matches the real G5+ Machine run page:
-           a dense grid of small dark tiles -- SCV/PTO/transmission/hitch/etc --
-           plus a steering settings panel and a map thumbnail) */
-        /* #page-cc hosts three mutually-exclusive states (#mm-9r / #mm-generic /
-           #mm-fallback), toggled via JS display:none/flex -- only one renders at a time. */
+        /* #page-cc hosts two mutually-exclusive states (#mm-9r / #mm-fallback),
+           toggled via JS display:none/block -- only one renders at a time. */
         #page-cc.workspace { padding: 0; }
-        #mm-9r, #mm-generic, #mm-fallback { display: none; width: 100%; height: 100%; }
+        #mm-9r, #mm-fallback { display: none; width: 100%; height: 100%; }
 
-        /* --- 9R exact match: light cream theme from real G5 CommandCenter screenshots --- */
+        /* --- Default Tractor Run Page: light cream theme from real G5 CommandCenter
+           screenshots, shown for any recognized John Deere tractor series --- */
         .mm9-page { background-color: #1a1a1a; padding: 4px; height: 100%; }
         .mm9-grid { display: grid; grid-template-columns: repeat(6, 1fr); grid-template-rows: 1fr 1.3fr; gap: 3px; height: 100%; }
         .mm9-tile { background-color: #efebda; border: 1px solid #b0aca0; display: flex; overflow: hidden; }
@@ -202,60 +200,6 @@
         .mm9-trans-mode { text-align: center; font-size: 11px; font-weight: 700; margin-top: 4px; color: #444; }
         .mm9-power-gauge { height: 10px; background: #d8d3c0; border: 1px solid #999; margin-top: 4px; }
         .mm9-power-fill { height: 100%; width: 8%; background: #ffe100; }
-
-        /* --- Generic (non-9R) tractor fallback: existing dark tile grid --- */
-        .mm-generic-page { background-color: #16150c; padding: 6px; gap: 6px; display: flex; height: 100%; }
-        .mm-grid {
-            flex: 1;
-            display: grid;
-            grid-template-columns: repeat(4, 1fr);
-            grid-auto-rows: 1fr;
-            gap: 5px;
-        }
-        .mm-tile {
-            background-color: #2a2916;
-            border: 1px solid #454328;
-            border-radius: 3px;
-            display: flex;
-            flex-direction: column;
-            overflow: hidden;
-        }
-        .mm-tile-header {
-            background-color: #473e35;
-            color: #ddd;
-            font-size: 9px;
-            font-weight: bold;
-            text-transform: uppercase;
-            padding: 3px 6px;
-            letter-spacing: 0.3px;
-        }
-        .mm-tile-body {
-            flex: 1;
-            display: flex;
-            align-items: baseline;
-            justify-content: center;
-            gap: 3px;
-            padding: 6px;
-        }
-        .mm-tile-value { font-size: 22px; font-weight: 700; color: #ffe100; }
-        .mm-tile-unit { font-size: 11px; color: #999; }
-        .mm-tile.mm-placeholder .mm-tile-value { color: #666; }
-        .mm-tile.mm-placeholder .mm-tile-header { color: #888; }
-
-        .mm-map-tile { grid-column: span 2; grid-row: span 2; position: relative; }
-        .mm-map-tile canvas { width: 100%; height: 100%; display: block; background-color: #3a4a2a; }
-
-        .mm-steering-panel {
-            width: 160px;
-            background-color: #2a2916;
-            border: 1px solid #454328;
-            border-radius: 3px;
-            padding: 10px;
-            color: white;
-        }
-        .mm-steering-title { font-size: 12px; font-weight: bold; color: #ffe100; margin-bottom: 10px; text-transform: uppercase; }
-        .mm-steering-row { display: flex; justify-content: space-between; font-size: 12px; padding: 6px 0; border-bottom: 1px solid #3a381f; }
-        .mm-placeholder-text { color: #666; }
 
         .mm-fallback {
             flex: 1; display: none; flex-direction: column; align-items: center; justify-content: center;
@@ -396,16 +340,15 @@
                 </div>
             </div>
 
-            <!-- PAGE 2: Machine Monitor / Default Tractor Run Page.
-                 Three mutually-exclusive states, toggled by JS based on vehicleModel/vehicleCategory:
-                   #mm-9r       -- exact match for real G5 CommandCenter 9R screenshots (light cream theme)
-                   #mm-generic  -- dark tile grid, shown for any OTHER tractor (SCV/PTO/hitch guesses)
-                   #mm-fallback -- plain message, shown for non-tractor categories -->
+            <!-- PAGE 2: Default Tractor Run Page.
+                 Two mutually-exclusive states, toggled by JS based on vehicleModel/vehicleCategory:
+                   #mm-9r       -- real tile grid/labels from G5 CommandCenter simulator screenshots,
+                                   shown for any recognized John Deere tractor series (9R, 8R, 6R, etc.)
+                   #mm-fallback -- plain message, shown for everything else (other brands, non-tractors) -->
             <div class="workspace" id="page-cc">
 
-                <!-- 9R exact match: real tile grid/labels from G5 CommandCenter simulator
-                     screenshots. Tiles marked mm9-placeholder show "--" -- the mod doesn't
-                     export fuel/temperature/pressure/transmission-gear/area data yet. -->
+                <!-- Tiles show "--" where the mod doesn't export that data yet
+                     (fuel/temperature/pressure/transmission-gear/area). -->
                 <div class="mm9-page" id="mm-9r">
                     <div class="mm9-grid">
                         <div class="mm9-tile mm9-split">
@@ -465,57 +408,6 @@
                             <div class="mm9-half"><span class="mm9-badge">Avg</span><svg class="mm9-icon" viewBox="0 0 24 24"><rect x="3" y="3" width="18" height="18" fill="none" stroke="#444" stroke-width="1.5"/><path d="M7 17L17 7M8 9a1 1 0 100-2 1 1 0 000 2zm8 8a1 1 0 100-2 1 1 0 000 2z" stroke="#444" stroke-width="1.5" fill="none"/></svg><div class="mm9-label">Counters A</div><div class="mm9-value-row"><span class="mm9-value" id="mm9-avg-area">--</span><span class="mm9-unit">ac/h</span></div></div>
                             <div class="mm9-half"><span class="mm9-badge">Work</span><svg class="mm9-icon" viewBox="0 0 24 24"><path d="M6 2h12v4l-4 6 4 6v4H6v-4l4-6-4-6V2z" fill="none" stroke="#444" stroke-width="1.5"/></svg><div class="mm9-value-row"><span class="mm9-value" id="mm9-work-hours">--</span><span class="mm9-unit">h</span></div></div>
                         </div>
-                    </div>
-                </div>
-
-                <!-- Generic tractor fallback (any tractor that isn't specifically a 9R) -->
-                <div class="mm-generic-page" id="mm-generic">
-                    <div class="mm-grid" id="mm-grid">
-                        <div class="mm-tile">
-                            <div class="mm-tile-header">Transmission</div>
-                            <div class="mm-tile-body"><div class="mm-tile-value" id="mm-speed">0.0</div><div class="mm-tile-unit">km/h</div></div>
-                        </div>
-                        <div class="mm-tile">
-                            <div class="mm-tile-header">Engine RPM</div>
-                            <div class="mm-tile-body"><div class="mm-tile-value" id="mm-rpm">0</div><div class="mm-tile-unit">rpm</div></div>
-                        </div>
-                        <div class="mm-tile">
-                            <div class="mm-tile-header">Heading</div>
-                            <div class="mm-tile-body"><div class="mm-tile-value" id="mm-heading">0&deg;</div></div>
-                        </div>
-                        <div class="mm-tile">
-                            <div class="mm-tile-header">Rear Hitch</div>
-                            <div class="mm-tile-body"><div class="mm-tile-value" id="mm-hitch">0</div><div class="mm-tile-unit">%</div></div>
-                        </div>
-
-                        <div class="mm-tile mm-placeholder"><div class="mm-tile-header">SCV I</div><div class="mm-tile-body"><div class="mm-tile-value">--</div></div></div>
-                        <div class="mm-tile mm-placeholder"><div class="mm-tile-header">SCV II</div><div class="mm-tile-body"><div class="mm-tile-value">--</div></div></div>
-                        <div class="mm-tile mm-placeholder"><div class="mm-tile-header">SCV III</div><div class="mm-tile-body"><div class="mm-tile-value">--</div></div></div>
-                        <div class="mm-tile mm-placeholder"><div class="mm-tile-header">SCV IV</div><div class="mm-tile-body"><div class="mm-tile-value">--</div></div></div>
-
-                        <div class="mm-tile mm-placeholder"><div class="mm-tile-header">SCV V</div><div class="mm-tile-body"><div class="mm-tile-value">--</div></div></div>
-                        <div class="mm-tile mm-placeholder"><div class="mm-tile-header">SCV VI</div><div class="mm-tile-body"><div class="mm-tile-value">--</div></div></div>
-                        <div class="mm-tile mm-placeholder"><div class="mm-tile-header">PTO Gear</div><div class="mm-tile-body"><div class="mm-tile-value">--</div></div></div>
-                        <div class="mm-tile mm-placeholder"><div class="mm-tile-header">Rear PTO</div><div class="mm-tile-body"><div class="mm-tile-value">--</div></div></div>
-
-                        <div class="mm-tile">
-                            <div class="mm-tile-header">Implement Width</div>
-                            <div class="mm-tile-body"><div class="mm-tile-value" id="mm-width">0.0</div><div class="mm-tile-unit">m</div></div>
-                        </div>
-                        <div class="mm-tile mm-placeholder"><div class="mm-tile-header">Fuel Rate</div><div class="mm-tile-body"><div class="mm-tile-value">--</div><div class="mm-tile-unit">gal/h</div></div></div>
-                        <div class="mm-tile mm-placeholder"><div class="mm-tile-header">Max Eng Speed</div><div class="mm-tile-body"><div class="mm-tile-value">--</div></div></div>
-
-                        <div class="mm-tile mm-map-tile">
-                            <div class="mm-tile-header">Position</div>
-                            <canvas id="map-canvas-mini"></canvas>
-                        </div>
-                    </div>
-
-                    <div class="mm-steering-panel" id="mm-steering-panel">
-                        <div class="mm-steering-title">Steering</div>
-                        <div class="mm-steering-row"><span>Ratio</span><span class="mm-placeholder-text">--</span></div>
-                        <div class="mm-steering-row"><span>Sensitivity</span><span class="mm-placeholder-text">--</span></div>
-                        <div class="mm-steering-row"><span>Resistance</span><span class="mm-placeholder-text">--</span></div>
                     </div>
                 </div>
 
@@ -582,8 +474,6 @@
         // grid, a driven trail, and the tractor fixed at screen center.
         const mapCanvas = document.getElementById('map-canvas');
         const mapCtx = mapCanvas.getContext('2d');
-        const miniMapCanvas = document.getElementById('map-canvas-mini');
-        const miniMapCtx = miniMapCanvas.getContext('2d');
         const miniMapCanvas9 = document.getElementById('map-canvas-mini9');
         const miniMapCtx9 = miniMapCanvas9.getContext('2d');
         const hudTractor = document.querySelector('.hud-tractor');
@@ -602,10 +492,6 @@
             const rect = mapCanvas.parentElement.getBoundingClientRect();
             mapCanvas.width = rect.width;
             mapCanvas.height = rect.height;
-
-            const miniRect = miniMapCanvas.parentElement.getBoundingClientRect();
-            miniMapCanvas.width = miniRect.width;
-            miniMapCanvas.height = miniRect.height;
 
             const mini9Rect = miniMapCanvas9.parentElement.getBoundingClientRect();
             miniMapCanvas9.width = mini9Rect.width;
@@ -671,7 +557,6 @@
 
         function drawMap(worldX, worldZ) {
             drawMapOn(mapCanvas, mapCtx, worldX, worldZ, METERS_VISIBLE);
-            drawMapOn(miniMapCanvas, miniMapCtx, worldX, worldZ, METERS_VISIBLE_MINI);
             drawMapOn(miniMapCanvas9, miniMapCtx9, worldX, worldZ, METERS_VISIBLE_MINI);
         }
 
@@ -686,22 +571,15 @@
         const speedValueEl = document.getElementById('speed-value');
         const rpmValueEl = document.getElementById('rpm-value');
 
-        // Machine Monitor page -- generic (non-9R) tractor grid
-        const mmSpeedEl = document.getElementById('mm-speed');
-        const mmRpmEl = document.getElementById('mm-rpm');
-        const mmHeadingEl = document.getElementById('mm-heading');
-        const mmHitchEl = document.getElementById('mm-hitch');
-        const mmWidthEl = document.getElementById('mm-width');
         const vehicleBadgeEl = document.getElementById('vehicle-badge');
 
-        // Machine Monitor page -- exact 9R match (only Speed + the mini-map are
-        // real here; RPM/heading aren't shown on the real Default Tractor Run
-        // Page's tile grid, so they're intentionally not displayed on this page)
+        // Default Tractor Run Page (only Speed + the mini-map are real here;
+        // RPM/heading aren't shown on the real page's tile grid, so they're
+        // intentionally not displayed on this page)
         const mm9SpeedEl = document.getElementById('mm9-speed');
 
         // Machine Monitor page -- state containers (mutually exclusive)
         const mm9El = document.getElementById('mm-9r');
-        const mmGenericEl = document.getElementById('mm-generic');
         const mmFallbackEl = document.getElementById('mm-fallback');
         const mmFallbackTypeEl = document.getElementById('mm-fallback-type');
         const SUPPORTED_MACHINE_MONITOR_CATEGORIES = ['tractor'];
@@ -740,8 +618,6 @@
         });
 
         TasDynTelemetry.connect((payload) => {
-            const implementLowered = !!payload.implementLowered;
-
             updateCrossTrackError((payload.crossTrackError || 0) * METERS_TO_INCHES);
             headingValueEl.innerHTML = `${compassLabel(payload.heading || 0)} ${Math.round(payload.heading || 0)}&deg;`;
             guidanceStatusEl.textContent = payload.guidanceActive
@@ -751,33 +627,25 @@
             speedValueEl.innerHTML = `${(payload.speed || 0).toFixed(1)} <span style="font-size:11px;font-weight:normal;">km/h</span>`;
             rpmValueEl.textContent = Math.round(payload.rpm || 0);
 
-            mmSpeedEl.textContent = (payload.speed || 0).toFixed(1);
-            mmRpmEl.textContent = Math.round(payload.rpm || 0);
-            mmHeadingEl.innerHTML = `${Math.round(payload.heading || 0)}&deg;`;
-            mmHitchEl.textContent = implementLowered ? '100' : '0';
-            mmWidthEl.textContent = (payload.implementWidth || 0).toFixed(1);
             vehicleBadgeEl.textContent = payload.vehicleName || '--';
 
             mm9SpeedEl.textContent = ((payload.speed || 0) * KPH_TO_MPH).toFixed(2);
 
-            // Three mutually-exclusive Machine Monitor states: exact 9R match,
-            // generic tractor grid, or the not-yet-supported fallback message.
+            // Two mutually-exclusive states: Default Tractor Run Page for any
+            // recognized John Deere tractor series, or the fallback message.
             const category = payload.vehicleCategory || 'other';
             const model = payload.vehicleModel || 'unknown';
-            const isTractor = SUPPORTED_MACHINE_MONITOR_CATEGORIES.includes(category);
-            const is9R = isTractor && model === '9R';
+            const isJDTractor = SUPPORTED_MACHINE_MONITOR_CATEGORIES.includes(category) && model !== 'unknown';
 
             const mm9WasVisible = mm9El.style.display === 'block';
-            const mmGenericWasVisible = mmGenericEl.style.display === 'flex';
 
-            mm9El.style.display = is9R ? 'block' : 'none';
-            mmGenericEl.style.display = (isTractor && !is9R) ? 'flex' : 'none';
-            mmFallbackEl.style.display = isTractor ? 'none' : 'flex';
+            mm9El.style.display = isJDTractor ? 'block' : 'none';
+            mmFallbackEl.style.display = isJDTractor ? 'none' : 'flex';
             mmFallbackTypeEl.textContent = category;
 
-            // The mini-map canvases read 0x0 while their container was hidden, so
-            // re-measure them right after a visibility change flips one back on.
-            if ((is9R && !mm9WasVisible) || (isTractor && !is9R && !mmGenericWasVisible)) {
+            // The mini-map canvas reads 0x0 while its container was hidden, so
+            // re-measure it right after a visibility change flips it back on.
+            if (isJDTractor && !mm9WasVisible) {
                 setTimeout(resizeMapCanvas, 10);
             }
 

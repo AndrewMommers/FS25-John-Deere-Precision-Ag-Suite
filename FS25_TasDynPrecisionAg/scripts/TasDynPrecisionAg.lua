@@ -41,16 +41,22 @@ function TasDynPrecisionAg.tasDynGetVehicleCategory(typeName)
     return "other"
 end
 
--- Exact model detection, layered on top of category. The web terminal shows
--- the precise "Default Tractor Run Page" (matched from real G5 CommandCenter
--- reference screenshots) only for this exact model; every other tractor keeps
--- the generic Machine Monitor grid. Matches "9R 590" etc. but deliberately
--- excludes "9RX ..." (tracked, a physically different machine/UI in the real
--- G5 system) via the required space after "9R".
+-- John Deere tractor series detection, layered on top of category. The web
+-- terminal shows the "Default Tractor Run Page" (matched from real G5
+-- CommandCenter reference screenshots) for any recognized JD tractor series;
+-- everything else (other brands, non-tractors) gets the plain fallback
+-- message. Series list matches the real-world JD row-crop/track tractor
+-- lineup (same set FS25_DashboardLive_VanillaVehicles ships JD displays for).
+local JOHN_DEERE_TRACTOR_SERIES = {
+    "5R", "5M", "6M", "6R", "7R", "7M", "8R", "8RT", "8RX", "9R", "9RT", "9RX", "S7"
+}
+
 function TasDynPrecisionAg.tasDynGetVehicleModel(vehicleName)
     if vehicleName == nil then return "unknown" end
-    if string.find(vehicleName, "^9R%s") ~= nil or vehicleName == "9R" then
-        return "9R"
+    for _, series in ipairs(JOHN_DEERE_TRACTOR_SERIES) do
+        if string.find(vehicleName, "^" .. series .. "%s") ~= nil or vehicleName == series then
+            return series
+        end
     end
     return "unknown"
 end
