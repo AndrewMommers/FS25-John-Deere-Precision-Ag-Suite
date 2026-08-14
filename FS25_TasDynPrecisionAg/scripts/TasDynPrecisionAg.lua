@@ -14,6 +14,12 @@ TasDynPrecisionAg = {}
 local EXPORT_INTERVAL_MS = 100 -- 10Hz telemetry export
 local COMMAND_POLL_INTERVAL_MS = 200
 
+-- Straight-line (AB) guidance PID gains. Untuned placeholders -- see
+-- docs/dev-technical.md 5.3, which calls for tuning separately per vehicle class.
+local GUIDANCE_KP = 0.6
+local GUIDANCE_KI = 0.0
+local GUIDANCE_KD = 0.15
+
 TasDynPrecisionAg.COMMANDS_XML_SCHEMA = XMLSchema.new("tasDynCommands")
 TasDynPrecisionAg.COMMANDS_XML_SCHEMA:register(XMLValueType.INT, "commands#seq", "Monotonic command sequence number", 0)
 TasDynPrecisionAg.COMMANDS_XML_SCHEMA:register(XMLValueType.STRING, "commands#type", "Command type")
@@ -45,20 +51,35 @@ function TasDynPrecisionAg:onLoad(savegame)
     spec.timeSinceLastExport = 0
     spec.timeSinceLastCommandPoll = 0
     spec.lastCommandSeq = 0
+
+    -- Straight-line (AB) guidance state
+    spec.guidanceActive = false
+    spec.guidanceMode = "manual"
+    spec.referenceX = 0
+    spec.referenceZ = 0
+    spec.referenceHeadingRad = 0
+    spec.crossTrackError = 0
+    spec.crossTrackErrorIntegral = 0
+    spec.previousCrossTrackError = 0
+    spec.steeringCorrection = 0
 end
 
 function TasDynPrecisionAg:onUpdate(dt, isActiveForInput, isActiveForInputIgnoreSelection, isSelected)
     local spec = self.spec_tasDynPrecisionAg
 
-    -- isActiveForInput is true only for the vehicle the local player is currently
-    -- operating, so this correctly excludes AI workers and other players' machines.
-    if not isActiveForInput then
+    -- isActiveForInput requires this exact vehicle part to hold UI selection
+    -- focus, which doesn't reliably land on the seat the player is actually
+    -- in (confirmed via debug logging: isControlled=true, isSelected=false).
+    -- getIsControlled() is true whenever a local or remote operator has
+    -- entered this vehicle, which is what we actually want to gate on.
+    if self.getIsControlled == nil or not self:getIsControlled() then
         return
     end
 
     spec.timeSinceLastExport = spec.timeSinceLastExport + dt
     if spec.timeSinceLastExport >= EXPORT_INTERVAL_MS then
         spec.timeSinceLastExport = 0
+        TasDynPrecisionAg.tasDynUpdateGuidance(self, EXPORT_INTERVAL_MS / 1000)
         TasDynPrecisionAg.tasDynExportTelemetry(self)
     end
 
@@ -67,6 +88,71 @@ function TasDynPrecisionAg:onUpdate(dt, isActiveForInput, isActiveForInputIgnore
         spec.timeSinceLastCommandPoll = 0
         TasDynPrecisionAg.tasDynPollCommands(self)
     end
+end
+
+-- Marks the vehicle's current position and heading as the AB reference line.
+-- This is straight-line guidance only (docs/dev-technical.md 5.1-5.3); curved
+-- and recorded-pass guidance lines are later work.
+function TasDynPrecisionAg:tasDynEngageGuidance()
+    local spec = self.spec_tasDynPrecisionAg
+
+    local x, _, z = getWorldTranslation(self.rootNode)
+    local dx, _, dz = localDirectionToWorld(self.rootNode, 0, 0, 1)
+    local headingRad = math.atan2(dx, dz)
+
+    spec.referenceX = x
+    spec.referenceZ = z
+    spec.referenceHeadingRad = headingRad
+    spec.crossTrackErrorIntegral = 0
+    spec.previousCrossTrackError = 0
+    spec.guidanceActive = true
+    spec.guidanceMode = "straight"
+
+    print(string.format(
+        "[TasDyn PrecisionAg] Guidance engaged: reference (%.2f, %.2f) heading %.1f deg",
+        x, z, math.deg(headingRad)
+    ))
+end
+
+function TasDynPrecisionAg:tasDynDisengageGuidance()
+    local spec = self.spec_tasDynPrecisionAg
+    spec.guidanceActive = false
+    spec.guidanceMode = "manual"
+    spec.crossTrackError = 0
+    spec.steeringCorrection = 0
+    print("[TasDyn PrecisionAg] Guidance disengaged")
+end
+
+-- Cross-track error (docs/dev-technical.md 5.2) and a PID steering correction
+-- (5.3) computed from it. Nothing currently consumes steeringCorrection to
+-- actually turn the wheel -- that's a deliberately separate, riskier step.
+function TasDynPrecisionAg:tasDynUpdateGuidance(dtSeconds)
+    local spec = self.spec_tasDynPrecisionAg
+
+    if not spec.guidanceActive then
+        spec.crossTrackError = 0
+        spec.steeringCorrection = 0
+        return
+    end
+
+    local x, _, z = getWorldTranslation(self.rootNode)
+    local sinRef = math.sin(spec.referenceHeadingRad)
+    local cosRef = math.cos(spec.referenceHeadingRad)
+
+    local crossTrackError = (x - spec.referenceX) * sinRef - (z - spec.referenceZ) * cosRef
+
+    spec.crossTrackErrorIntegral = spec.crossTrackErrorIntegral + crossTrackError * dtSeconds
+
+    local crossTrackErrorDerivative = 0
+    if dtSeconds > 0 then
+        crossTrackErrorDerivative = (crossTrackError - spec.previousCrossTrackError) / dtSeconds
+    end
+    spec.previousCrossTrackError = crossTrackError
+
+    spec.crossTrackError = crossTrackError
+    spec.steeringCorrection = GUIDANCE_KP * crossTrackError
+        + GUIDANCE_KI * spec.crossTrackErrorIntegral
+        + GUIDANCE_KD * crossTrackErrorDerivative
 end
 
 function TasDynPrecisionAg:tasDynExportTelemetry()
@@ -98,13 +184,16 @@ function TasDynPrecisionAg:tasDynExportTelemetry()
     end
 
     local json = string.format(
-        '{"speed":%.2f,"rpm":%.1f,"heading":%.2f,"implementLowered":%s,"implementWidth":%.2f,"crossTrackError":%.3f}',
+        '{"speed":%.2f,"rpm":%.1f,"heading":%.2f,"implementLowered":%s,"implementWidth":%.2f,"crossTrackError":%.3f,"guidanceActive":%s,"guidanceMode":"%s","steeringCorrection":%.3f}',
         speedKph,
         engineRpm,
         heading,
         tostring(implementLowered),
         implementWidth,
-        0 -- AutoTrac cross-track error math lands here in Phase 2 (see docs/dev-technical.md 5.2)
+        spec.crossTrackError,
+        tostring(spec.guidanceActive),
+        spec.guidanceMode,
+        spec.steeringCorrection
     )
 
     -- FS25's Lua sandbox only allows write-mode io.open, so this overwrites
@@ -137,8 +226,11 @@ end
 
 function TasDynPrecisionAg:tasDynExecuteCommand(commandType, desiredState)
     if commandType == "TOGGLE_AUTOTRAC" then
-        print(string.format("[TasDyn PrecisionAg] AutoTrac toggle requested: %s", tostring(desiredState)))
-        -- Hook into guidance/steering logic here once it exists (Phase 2)
+        if desiredState then
+            TasDynPrecisionAg.tasDynEngageGuidance(self)
+        else
+            TasDynPrecisionAg.tasDynDisengageGuidance(self)
+        end
 
     elseif commandType == "TOGGLE_SECTION_CTL" then
         print(string.format("[TasDyn PrecisionAg] Section control toggle requested: %s", tostring(desiredState)))
