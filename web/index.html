@@ -9,23 +9,21 @@
         /* Base Reset & Fonts */
         * { box-sizing: border-box; margin: 0; padding: 0; -webkit-user-select: none; user-select: none; }
         body {
-            background-color: #1a1a1a;
+            background-color: #000;
             font-family: "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
-            display: flex;
-            justify-content: center;
-            align-items: center;
             height: 100vh;
             overflow: hidden;
         }
 
-        /* Device Bezel / Monitor Enclosure */
+        /* Fills the browser window edge-to-edge (was a fixed 1024x600 device
+           mockup frame). Elements positioned with absolute pixel offsets --
+           map buttons, heading tab, flag circles -- were tuned against that
+           1024x600 reference and may sit slightly off-scale at other window
+           sizes; flag anything that looks visibly wrong and it can be tightened. */
         .device-bezel {
-            width: 1024px;
-            height: 600px;
+            width: 100vw;
+            height: 100vh;
             background-color: #000;
-            border: 6px solid #222;
-            border-radius: 4px;
-            box-shadow: 0 10px 30px rgba(0,0,0,0.8);
             display: flex;
             flex-direction: column;
             position: relative;
@@ -554,10 +552,10 @@
             }
 
             // Real field boundaries, exported once by the mod from
-            // g_fieldManager.fields[i].densityMapPolygon (see TasDynFieldExport.lua)
+            // g_fieldManager.fields[i].densityMapPolygon (see TasDynFieldExport.lua).
+            // Filled (not just outlined) so fields read as actual ground against
+            // the surrounding terrain, closer to a real map than abstract lines.
             if (fields.length > 0) {
-                ctx.strokeStyle = 'rgba(255,255,255,0.6)';
-                ctx.lineWidth = 1.5;
                 fields.forEach((field) => {
                     if (!field.points || field.points.length < 2) return;
                     ctx.beginPath();
@@ -567,6 +565,10 @@
                         if (i === 0) ctx.moveTo(cx, cy); else ctx.lineTo(cx, cy);
                     });
                     ctx.closePath();
+                    ctx.fillStyle = 'rgba(139, 111, 71, 0.55)';
+                    ctx.fill();
+                    ctx.strokeStyle = 'rgba(255,255,255,0.7)';
+                    ctx.lineWidth = 1.5;
                     ctx.stroke();
                 });
             }
