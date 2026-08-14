@@ -188,6 +188,9 @@
         .mm9-value { font-size: 17px; font-weight: 700; color: #222; }
         .mm9-value.mm9-real { color: #275623; }
         .mm9-unit { font-size: 9px; color: #666; }
+        .mm9-icon { width: 14px; height: 14px; flex-shrink: 0; margin-bottom: 2px; }
+        .mm9-icon-lg { width: 22px; height: 22px; }
+        .mm9-badge { align-self: flex-start; background: #ccc7b4; color: #444; font-size: 7px; font-weight: 700; text-transform: uppercase; padding: 1px 4px; border-radius: 2px; margin-bottom: 2px; }
 
         .mm9-map-tile { grid-row: span 1; padding: 0; }
         .mm9-map-tile canvas { width: 100%; height: 100%; display: block; background-color: #3a4a2a; }
@@ -301,7 +304,7 @@
 
         <!-- Header Bar -->
         <div class="header-bar">
-            <div class="header-title" id="page-title">CommandCenter Guidance</div>
+            <div class="header-title" id="page-title">Default Tractor Run Page</div>
             <div class="header-status">
                 <div class="status-items">
                     <span id="clock">10:25</span>
@@ -340,8 +343,9 @@
                     <div class="map-btn-circle" style="top: 145px;"><svg viewBox="0 0 24 24"><path d="M12 4l-8 8h6v8h4v-8h6z"/></svg></div>
                     <div class="map-btn-circle" style="bottom: 120px;"><svg viewBox="0 0 24 24"><path d="M3 18h18v-2H3v2zm0-5h18v-2H3v2zm0-7v2h18V6H3z"/></svg></div>
 
-                    <div class="flag-circle" style="left: 10px; z-index: 1001;"><svg viewBox="0 0 24 24"><path d="M14.4 6L14 4H5v17h2v-7h5.6l.4 2h7V6z"/></svg></div>
-                    <div class="flag-circle" style="left: 70px; z-index: 1000;"><svg viewBox="0 0 24 24"><path d="M14.4 6L14 4H5v17h2v-7h5.6l.4 2h7V6z"/></svg></div>
+                    <div class="map-btn-right" style="top: 140px;"><svg viewBox="0 0 24 24"><path d="M14 4l2.29 2.29-2.88 2.88 1.42 1.42 2.88-2.88L20 10V4zm-4 0H4v6l2.29-2.29 4.71 4.7V20h2v-8.41l-5.29-5.3z"/></svg></div>
+                    <div class="map-btn-right" style="bottom: 150px;"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9" fill="none" stroke="white" stroke-width="1.5"/><path d="M12 6v12M8 10l4-4 4 4" stroke="white" stroke-width="1.5" fill="none"/></svg></div>
+                    <div class="map-btn-right" style="bottom: 100px;"><svg viewBox="0 0 24 24"><path d="M12 4l-1.41 1.41L16.17 11H4v2h12.17l-5.58 5.59L12 20l8-8z" transform="rotate(90 12 12)"/></svg></div>
 
                     <div class="hud-tractor">
                         <div class="hud-line-fwd"></div>
@@ -355,7 +359,7 @@
 
                 <div class="sidebar">
                     <div class="sb-section" style="flex: 1;">
-                        <div class="sb-header">CommandCenter Guidance</div>
+                        <div class="sb-header">Guidance</div>
                         <div class="sb-content">
                             <div class="sb-title" id="guidance-status">Guidance: Manual</div>
                             <div class="sb-btn">Set Track</div>
@@ -405,60 +409,61 @@
                 <div class="mm9-page" id="mm-9r">
                     <div class="mm9-grid">
                         <div class="mm9-tile mm9-split">
-                            <div class="mm9-half"><div class="mm9-label">Readings<br>Counters A</div><div class="mm9-value-row"><span class="mm9-value" id="mm9-fuel-hr">--</span><span class="mm9-unit">gal/h</span></div></div>
-                            <div class="mm9-half"><div class="mm9-label">Counters A</div><div class="mm9-value-row"><span class="mm9-value" id="mm9-fuel-ac">--</span><span class="mm9-unit">gal/ac</span></div></div>
+                            <div class="mm9-half"><svg class="mm9-icon" viewBox="0 0 24 24"><path d="M12 2C8 8 5 11 5 15a7 7 0 0014 0c0-4-3-7-7-13z" fill="none" stroke="#444" stroke-width="1.5"/></svg><div class="mm9-label">Readings<br>Counters A</div><div class="mm9-value-row"><span class="mm9-value" id="mm9-fuel-hr">--</span><span class="mm9-unit">gal/h</span></div></div>
+                            <div class="mm9-half"><svg class="mm9-icon" viewBox="0 0 24 24"><path d="M12 2C8 8 5 11 5 15a7 7 0 0014 0c0-4-3-7-7-13z" fill="none" stroke="#444" stroke-width="1.5"/></svg><div class="mm9-label">Counters A</div><div class="mm9-value-row"><span class="mm9-value" id="mm9-fuel-ac">--</span><span class="mm9-unit">gal/ac</span></div></div>
                         </div>
                         <div class="mm9-tile mm9-split">
-                            <div class="mm9-half"><div class="mm9-label">Readings<br>Machine</div><div class="mm9-value-row"><span class="mm9-value" id="mm9-idle">--</span><span class="mm9-unit">h idle</span></div></div>
-                            <div class="mm9-half"><div class="mm9-label">Machine</div><div class="mm9-value-row"><span class="mm9-value mm9-real" id="mm9-speed">0.00</span><span class="mm9-unit">mi/hr</span></div></div>
+                            <div class="mm9-half"><span class="mm9-badge">Idle</span><svg class="mm9-icon" viewBox="0 0 24 24"><path d="M6 2h12v4l-4 6 4 6v4H6v-4l4-6-4-6V2z" fill="none" stroke="#444" stroke-width="1.5"/></svg><div class="mm9-label">Readings<br>Machine</div><div class="mm9-value-row"><span class="mm9-value" id="mm9-idle">--</span><span class="mm9-unit">h</span></div></div>
+                            <div class="mm9-half"><svg class="mm9-icon" viewBox="0 0 24 24"><circle cx="6" cy="18" r="3" fill="none" stroke="#444" stroke-width="1.5"/><circle cx="17" cy="18" r="4" fill="none" stroke="#444" stroke-width="1.5"/><path d="M2 14h6l2-4h6l3 4h1" fill="none" stroke="#444" stroke-width="1.5"/></svg><div class="mm9-label">Machine</div><div class="mm9-value-row"><span class="mm9-value mm9-real" id="mm9-speed">0.00</span><span class="mm9-unit">mi/hr</span></div></div>
                         </div>
                         <div class="mm9-tile mm9-split">
-                            <div class="mm9-half"><div class="mm9-label">Machine</div><div class="mm9-value-row"><span class="mm9-value" id="mm9-coolant">--</span><span class="mm9-unit">&deg;F</span></div></div>
-                            <div class="mm9-half"><div class="mm9-label">Machine</div><div class="mm9-value-row"><span class="mm9-value" id="mm9-fuel-pct">--</span><span class="mm9-unit">%</span></div></div>
+                            <div class="mm9-half"><svg class="mm9-icon" viewBox="0 0 24 24"><rect x="10" y="3" width="4" height="12" rx="2" fill="none" stroke="#444" stroke-width="1.5"/><circle cx="12" cy="18" r="4" fill="none" stroke="#444" stroke-width="1.5"/></svg><div class="mm9-label">Machine</div><div class="mm9-value-row"><span class="mm9-value" id="mm9-coolant">--</span><span class="mm9-unit">&deg;F</span></div></div>
+                            <div class="mm9-half"><svg class="mm9-icon" viewBox="0 0 24 24"><rect x="4" y="8" width="10" height="13" rx="1" fill="none" stroke="#444" stroke-width="1.5"/><path d="M14 11h3a2 2 0 012 2v5a1.5 1.5 0 003 0V9l-3-3" fill="none" stroke="#444" stroke-width="1.5"/></svg><div class="mm9-label">Machine</div><div class="mm9-value-row"><span class="mm9-value" id="mm9-fuel-pct">--</span><span class="mm9-unit">%</span></div></div>
                         </div>
                         <div class="mm9-tile mm9-split">
-                            <div class="mm9-half"><div class="mm9-label">Machine</div><div class="mm9-value-row"><span class="mm9-value mm9-real" id="mm9-heading">0&deg;</span></div></div>
-                            <div class="mm9-half"><div class="mm9-label">Machine</div><div class="mm9-value-row"><span class="mm9-value" id="mm9-temp2">--</span><span class="mm9-unit">&deg;F</span></div></div>
+                            <div class="mm9-half"><svg class="mm9-icon" viewBox="0 0 24 24"><rect x="10" y="3" width="4" height="12" rx="2" fill="none" stroke="#444" stroke-width="1.5"/><circle cx="12" cy="18" r="4" fill="none" stroke="#444" stroke-width="1.5"/></svg><div class="mm9-label">Machine</div><div class="mm9-value-row"><span class="mm9-value" id="mm9-temp1">--</span><span class="mm9-unit">&deg;F</span></div></div>
+                            <div class="mm9-half"><svg class="mm9-icon" viewBox="0 0 24 24"><rect x="10" y="3" width="4" height="12" rx="2" fill="none" stroke="#444" stroke-width="1.5"/><circle cx="12" cy="18" r="4" fill="none" stroke="#444" stroke-width="1.5"/></svg><div class="mm9-label">Machine</div><div class="mm9-value-row"><span class="mm9-value" id="mm9-temp2">--</span><span class="mm9-unit">&deg;F</span></div></div>
                         </div>
                         <div class="mm9-tile mm9-split">
-                            <div class="mm9-half"><div class="mm9-label">Readings<br>Counters A</div><div class="mm9-value-row"><span class="mm9-value" id="mm9-area-rate">--</span><span class="mm9-unit">ac/h</span></div></div>
-                            <div class="mm9-half"><div class="mm9-label">Machine</div><div class="mm9-value-row"><span class="mm9-value" id="mm9-oil1">--</span><span class="mm9-unit">psi</span></div></div>
+                            <div class="mm9-half"><svg class="mm9-icon" viewBox="0 0 24 24"><rect x="3" y="3" width="18" height="18" fill="none" stroke="#444" stroke-width="1.5"/><path d="M7 17L17 7M8 9a1 1 0 100-2 1 1 0 000 2zm8 8a1 1 0 100-2 1 1 0 000 2z" stroke="#444" stroke-width="1.5" fill="none"/></svg><div class="mm9-label">Readings<br>Counters A</div><div class="mm9-value-row"><span class="mm9-value" id="mm9-area-rate">--</span><span class="mm9-unit">ac/h</span></div></div>
+                            <div class="mm9-half"><svg class="mm9-icon" viewBox="0 0 24 24"><path d="M12 2C8 8 5 11 5 15a7 7 0 0014 0c0-4-3-7-7-13z" fill="#444"/></svg><div class="mm9-label">Machine</div><div class="mm9-value-row"><span class="mm9-value" id="mm9-oil1">--</span><span class="mm9-unit">psi</span></div></div>
                         </div>
                         <div class="mm9-tile mm9-split">
-                            <div class="mm9-half"><div class="mm9-label">Readings<br>Machine</div><div class="mm9-value-row"><span class="mm9-value mm9-real" id="mm9-rpm">0</span><span class="mm9-unit">rpm</span></div></div>
-                            <div class="mm9-half"><div class="mm9-label">Counters A</div><div class="mm9-value-row"><span class="mm9-value" id="mm9-area">--</span><span class="mm9-unit">ac</span></div></div>
+                            <div class="mm9-half"><svg class="mm9-icon" viewBox="0 0 24 24"><rect x="3" y="3" width="18" height="18" fill="none" stroke="#444" stroke-width="1.5"/><path d="M7 17L17 7M8 9a1 1 0 100-2 1 1 0 000 2zm8 8a1 1 0 100-2 1 1 0 000 2z" stroke="#444" stroke-width="1.5" fill="none"/></svg><div class="mm9-label">Readings<br>Machine</div><div class="mm9-value-row"><span class="mm9-value" id="mm9-pct1">--</span><span class="mm9-unit">%</span></div></div>
+                            <div class="mm9-half"><svg class="mm9-icon" viewBox="0 0 24 24"><rect x="3" y="3" width="18" height="18" fill="none" stroke="#444" stroke-width="1.5"/><path d="M7 17L17 7M8 9a1 1 0 100-2 1 1 0 000 2zm8 8a1 1 0 100-2 1 1 0 000 2z" stroke="#444" stroke-width="1.5" fill="none"/></svg><div class="mm9-label">Counters A</div><div class="mm9-value-row"><span class="mm9-value" id="mm9-area">--</span><span class="mm9-unit">ac</span></div></div>
                         </div>
 
                         <div class="mm9-tile mm9-map-tile">
                             <canvas id="map-canvas-mini9"></canvas>
                         </div>
                         <div class="mm9-tile mm9-split">
-                            <div class="mm9-half"><div class="mm9-label">Readings<br>Counters A</div><div class="mm9-value-row"><span class="mm9-value" id="mm9-fuel-hr2">--</span><span class="mm9-unit">gal/h</span></div></div>
-                            <div class="mm9-half"><div class="mm9-label">Machine</div><div class="mm9-value-row"><span class="mm9-value" id="mm9-fuel-hr2b">--</span></div></div>
+                            <div class="mm9-half"><svg class="mm9-icon" viewBox="0 0 24 24"><path d="M12 2C8 8 5 11 5 15a7 7 0 0014 0c0-4-3-7-7-13z" fill="none" stroke="#444" stroke-width="1.5"/></svg><div class="mm9-label">Readings<br>Counters A</div><div class="mm9-value-row"><span class="mm9-value" id="mm9-fuel-hr2">--</span><span class="mm9-unit">gal/h</span></div></div>
+                            <div class="mm9-half"><svg class="mm9-icon" viewBox="0 0 24 24"><path d="M12 2C8 8 5 11 5 15a7 7 0 0014 0c0-4-3-7-7-13z" fill="none" stroke="#444" stroke-width="1.5"/></svg><div class="mm9-label">Machine</div><div class="mm9-value-row"><span class="mm9-value" id="mm9-fuel-hr2b">--</span></div></div>
                         </div>
                         <div class="mm9-tile mm9-block">
                             <div class="mm9-block-header">Transmission</div>
                             <div class="mm9-trans-row"><span>F2</span><span class="mm9-value">--</span></div>
                             <div class="mm9-trans-row"><span>F1</span><span class="mm9-value">--</span></div>
-                            <div class="mm9-trans-row mm9-trans-unit">MPH</div>
+                            <div class="mm9-trans-row mm9-trans-unit"><svg class="mm9-icon" viewBox="0 0 24 24"><circle cx="12" cy="12" r="3" fill="none" stroke="#666" stroke-width="1.5"/><path d="M12 2v3M12 19v3M2 12h3M19 12h3M5 5l2 2M17 17l2 2M19 5l-2 2M5 19l2-2" stroke="#666" stroke-width="1.5"/></svg>MPH</div>
                             <div class="mm9-trans-row"><span>R1</span><span class="mm9-value">--</span></div>
                             <div class="mm9-trans-row"><span>R2</span><span class="mm9-value">--</span></div>
                             <div class="mm9-trans-mode">Manual</div>
                         </div>
                         <div class="mm9-tile mm9-block">
                             <div class="mm9-block-header">Engine Power</div>
+                            <div class="mm9-value-row" style="justify-content:center;"><svg class="mm9-icon-lg" viewBox="0 0 24 24"><path d="M6 8h12l-1 10a2 2 0 01-2 2H9a2 2 0 01-2-2L6 8z" fill="none" stroke="#444" stroke-width="1.5"/><path d="M9 8V6a3 3 0 016 0v2" fill="none" stroke="#444" stroke-width="1.5"/></svg></div>
                             <div class="mm9-power-gauge"><div class="mm9-power-fill"></div></div>
                             <div class="mm9-value-row" style="justify-content:center; margin-top:6px;"><span class="mm9-value" id="mm9-hours">--</span><span class="mm9-unit">h</span></div>
                             <div class="mm9-block-header" style="margin-top:8px;">Max Eng Speed</div>
-                            <div class="mm9-value-row" style="justify-content:center;"><span class="mm9-value" id="mm9-max-eng">--</span></div>
+                            <div class="mm9-value-row" style="justify-content:center;"><svg class="mm9-icon" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9" fill="none" stroke="#444" stroke-width="1.5"/><line x1="12" y1="12" x2="12" y2="5" stroke="#444" stroke-width="1.5"/></svg><span class="mm9-value" id="mm9-max-eng">--</span></div>
                         </div>
                         <div class="mm9-tile mm9-split">
-                            <div class="mm9-half"><div class="mm9-label">Readings<br>Counters A</div><div class="mm9-value-row"><span class="mm9-value" id="mm9-fuel-ac2">--</span><span class="mm9-unit">gal/ac</span></div></div>
-                            <div class="mm9-half"><div class="mm9-label">Machine</div><div class="mm9-value-row"><span class="mm9-value" id="mm9-oil2">--</span><span class="mm9-unit">psi</span></div></div>
+                            <div class="mm9-half"><svg class="mm9-icon" viewBox="0 0 24 24"><path d="M12 2C8 8 5 11 5 15a7 7 0 0014 0c0-4-3-7-7-13z" fill="none" stroke="#444" stroke-width="1.5"/></svg><div class="mm9-label">Readings<br>Counters A</div><div class="mm9-value-row"><span class="mm9-value" id="mm9-fuel-ac2">--</span><span class="mm9-unit">gal/ac</span></div></div>
+                            <div class="mm9-half"><svg class="mm9-icon" viewBox="0 0 24 24"><path d="M12 2C8 8 5 11 5 15a7 7 0 0014 0c0-4-3-7-7-13z" fill="#444"/></svg><div class="mm9-label">Machine</div><div class="mm9-value-row"><span class="mm9-value" id="mm9-oil2">--</span><span class="mm9-unit">psi</span></div></div>
                         </div>
                         <div class="mm9-tile mm9-split">
-                            <div class="mm9-half"><div class="mm9-label">Counters A<br>Avg</div><div class="mm9-value-row"><span class="mm9-value" id="mm9-avg-area">--</span><span class="mm9-unit">ac/h</span></div></div>
-                            <div class="mm9-half"><div class="mm9-label">Work</div><div class="mm9-value-row"><span class="mm9-value" id="mm9-work-hours">--</span><span class="mm9-unit">h</span></div></div>
+                            <div class="mm9-half"><span class="mm9-badge">Avg</span><svg class="mm9-icon" viewBox="0 0 24 24"><rect x="3" y="3" width="18" height="18" fill="none" stroke="#444" stroke-width="1.5"/><path d="M7 17L17 7M8 9a1 1 0 100-2 1 1 0 000 2zm8 8a1 1 0 100-2 1 1 0 000 2z" stroke="#444" stroke-width="1.5" fill="none"/></svg><div class="mm9-label">Counters A</div><div class="mm9-value-row"><span class="mm9-value" id="mm9-avg-area">--</span><span class="mm9-unit">ac/h</span></div></div>
+                            <div class="mm9-half"><span class="mm9-badge">Work</span><svg class="mm9-icon" viewBox="0 0 24 24"><path d="M6 2h12v4l-4 6 4 6v4H6v-4l4-6-4-6V2z" fill="none" stroke="#444" stroke-width="1.5"/></svg><div class="mm9-value-row"><span class="mm9-value" id="mm9-work-hours">--</span><span class="mm9-unit">h</span></div></div>
                         </div>
                     </div>
                 </div>
@@ -547,8 +552,8 @@
     <script>
         // --- Page navigation (real toggle between Guidance and Machine Monitor pages) ---
         const pageConfigs = [
-            { id: 'page-1', title: 'CommandCenter Guidance' },
-            { id: 'page-cc', title: 'Machine Monitor' }
+            { id: 'page-cc', title: 'Default Tractor Run Page' },
+            { id: 'page-1', title: 'Guidance' }
         ];
         let currentPageIndex = 0;
 
@@ -689,10 +694,10 @@
         const mmWidthEl = document.getElementById('mm-width');
         const vehicleBadgeEl = document.getElementById('vehicle-badge');
 
-        // Machine Monitor page -- exact 9R match
+        // Machine Monitor page -- exact 9R match (only Speed + the mini-map are
+        // real here; RPM/heading aren't shown on the real Default Tractor Run
+        // Page's tile grid, so they're intentionally not displayed on this page)
         const mm9SpeedEl = document.getElementById('mm9-speed');
-        const mm9RpmEl = document.getElementById('mm9-rpm');
-        const mm9HeadingEl = document.getElementById('mm9-heading');
 
         // Machine Monitor page -- state containers (mutually exclusive)
         const mm9El = document.getElementById('mm-9r');
@@ -754,8 +759,6 @@
             vehicleBadgeEl.textContent = payload.vehicleName || '--';
 
             mm9SpeedEl.textContent = ((payload.speed || 0) * KPH_TO_MPH).toFixed(2);
-            mm9RpmEl.textContent = Math.round(payload.rpm || 0);
-            mm9HeadingEl.innerHTML = `${Math.round(payload.heading || 0)}&deg;`;
 
             // Three mutually-exclusive Machine Monitor states: exact 9R match,
             // generic tractor grid, or the not-yet-supported fallback message.
