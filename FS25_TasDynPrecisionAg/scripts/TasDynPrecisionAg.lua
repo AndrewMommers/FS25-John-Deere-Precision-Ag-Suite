@@ -25,6 +25,36 @@ TasDynPrecisionAg.COMMANDS_XML_SCHEMA:register(XMLValueType.INT, "commands#seq",
 TasDynPrecisionAg.COMMANDS_XML_SCHEMA:register(XMLValueType.STRING, "commands#type", "Command type")
 TasDynPrecisionAg.COMMANDS_XML_SCHEMA:register(XMLValueType.BOOL, "commands#state", "Desired boolean state", false)
 
+-- Supported vehicle category list. The web terminal branches its Machine
+-- Monitor layout on this (see web/index.html) -- tractor is the only category
+-- with a real tile set so far; everything else falls back to a plain message
+-- until we have reference data for combine/sprayer/seeder run pages.
+function TasDynPrecisionAg.tasDynGetVehicleCategory(typeName)
+    if typeName == nil then return "other" end
+    local lower = string.lower(typeName)
+
+    if string.find(lower, "tractor") ~= nil then return "tractor" end
+    if string.find(lower, "combine") ~= nil or lower == "riceharvester" or lower == "cottonharvester" then return "combine" end
+    if string.find(lower, "sprayer") ~= nil then return "sprayer" end
+    if string.find(lower, "owingmachine") ~= nil then return "seeder" end
+
+    return "other"
+end
+
+-- Exact model detection, layered on top of category. The web terminal shows
+-- the precise "Default Tractor Run Page" (matched from real G5 CommandCenter
+-- reference screenshots) only for this exact model; every other tractor keeps
+-- the generic Machine Monitor grid. Matches "9R 590" etc. but deliberately
+-- excludes "9RX ..." (tracked, a physically different machine/UI in the real
+-- G5 system) via the required space after "9R".
+function TasDynPrecisionAg.tasDynGetVehicleModel(vehicleName)
+    if vehicleName == nil then return "unknown" end
+    if string.find(vehicleName, "^9R%s") ~= nil or vehicleName == "9R" then
+        return "9R"
+    end
+    return "unknown"
+end
+
 function TasDynPrecisionAg.prerequisitesPresent(specializations)
     return SpecializationUtil.hasSpecialization(Drivable, specializations)
         and SpecializationUtil.hasSpecialization(Motorized, specializations)
@@ -47,6 +77,7 @@ function TasDynPrecisionAg:onLoad(savegame)
 
     spec.telemetryFilePath = spec.folderPath .. "telemetry.json"
     spec.commandsFilePath = spec.folderPath .. "commands.xml"
+    spec.vehicleCategory = TasDynPrecisionAg.tasDynGetVehicleCategory(self.typeName)
 
     spec.timeSinceLastExport = 0
     spec.timeSinceLastCommandPoll = 0
@@ -164,6 +195,10 @@ function TasDynPrecisionAg:tasDynExportTelemetry()
     local worldX, _, worldZ = getWorldTranslation(self.rootNode)
     local terrainSize = g_currentMission.terrainSize or 2048
 
+    local vehicleName = self:getName() or "Unknown"
+    local vehicleModel = TasDynPrecisionAg.tasDynGetVehicleModel(vehicleName)
+    vehicleName = vehicleName:gsub('\\', '\\\\'):gsub('"', '\\"')
+
     local dx, _, dz = localDirectionToWorld(self.rootNode, 0, 0, 1)
     local heading = math.deg(math.atan2(dx, dz))
     if heading < 0 then heading = heading + 360 end
@@ -187,7 +222,7 @@ function TasDynPrecisionAg:tasDynExportTelemetry()
     end
 
     local json = string.format(
-        '{"speed":%.2f,"rpm":%.1f,"heading":%.2f,"implementLowered":%s,"implementWidth":%.2f,"crossTrackError":%.3f,"guidanceActive":%s,"guidanceMode":"%s","steeringCorrection":%.3f,"x":%.2f,"z":%.2f,"terrainSize":%.1f}',
+        '{"speed":%.2f,"rpm":%.1f,"heading":%.2f,"implementLowered":%s,"implementWidth":%.2f,"crossTrackError":%.3f,"guidanceActive":%s,"guidanceMode":"%s","steeringCorrection":%.3f,"x":%.2f,"z":%.2f,"terrainSize":%.1f,"vehicleName":"%s","vehicleCategory":"%s","vehicleModel":"%s"}',
         speedKph,
         engineRpm,
         heading,
@@ -199,7 +234,10 @@ function TasDynPrecisionAg:tasDynExportTelemetry()
         spec.steeringCorrection,
         worldX or 0,
         worldZ or 0,
-        terrainSize
+        terrainSize,
+        vehicleName,
+        spec.vehicleCategory,
+        vehicleModel
     )
 
     -- FS25's Lua sandbox only allows write-mode io.open, so this overwrites

@@ -1,136 +1,792 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="UTF-8" />
-<meta name="viewport" content="width=device-width, initial-scale=1.0" />
-<title>TasDyn G5 Terminal</title>
-<style>
-  :root {
-    --bg: #0b0f0c;
-    --panel: #121a14;
-    --border: #26331f;
-    --accent: #ffde00;
-    --accent-dim: #7a7300;
-    --green: #367c2b;
-    --text: #e8ede6;
-    --text-dim: #8a978a;
-    --danger: #c73434;
-  }
-  * { box-sizing: border-box; }
-  body {
-    margin: 0;
-    background: var(--bg);
-    color: var(--text);
-    font-family: "Segoe UI", system-ui, sans-serif;
-    min-height: 100vh;
-  }
-  header {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    padding: 12px 20px;
-    background: var(--panel);
-    border-bottom: 2px solid var(--green);
-  }
-  header h1 {
-    font-size: 16px;
-    letter-spacing: 0.08em;
-    text-transform: uppercase;
-    margin: 0;
-    color: var(--accent);
-  }
-  #status {
-    display: flex;
-    align-items: center;
-    gap: 8px;
-    font-size: 13px;
-    color: var(--text-dim);
-  }
-  #status .dot {
-    width: 10px;
-    height: 10px;
-    border-radius: 50%;
-    background: var(--danger);
-  }
-  #status.connected .dot { background: var(--green); }
-  #status.connected .label::after { content: "Connected"; }
-  #status:not(.connected) .label::after { content: "Disconnected — retrying"; }
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>G5Plus CommandCenter&trade; - TasDyn Precision Ag</title>
 
-  main {
-    padding: 20px;
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
-    gap: 14px;
-  }
-  .tile {
-    background: var(--panel);
-    border: 1px solid var(--border);
-    border-radius: 6px;
-    padding: 14px 16px;
-  }
-  .tile .label {
-    font-size: 11px;
-    text-transform: uppercase;
-    letter-spacing: 0.08em;
-    color: var(--text-dim);
-    margin-bottom: 6px;
-  }
-  .tile .value {
-    font-size: 28px;
-    font-weight: 600;
-    color: var(--text);
-  }
-  .tile .unit {
-    font-size: 13px;
-    color: var(--text-dim);
-    margin-left: 4px;
-  }
+    <style>
+        /* Base Reset & Fonts */
+        * { box-sizing: border-box; margin: 0; padding: 0; -webkit-user-select: none; user-select: none; }
+        body {
+            background-color: #1a1a1a;
+            font-family: "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            overflow: hidden;
+        }
 
-  footer {
-    padding: 20px;
-    display: flex;
-    gap: 10px;
-  }
-  button {
-    background: var(--green);
-    color: var(--text);
-    border: none;
-    border-radius: 4px;
-    padding: 10px 18px;
-    font-size: 13px;
-    cursor: pointer;
-    text-transform: uppercase;
-    letter-spacing: 0.05em;
-  }
-  button:hover { background: var(--accent-dim); }
-  button.active { background: var(--accent); color: #1a1a1a; }
-</style>
+        /* Device Bezel / Monitor Enclosure */
+        .device-bezel {
+            width: 1024px;
+            height: 600px;
+            background-color: #000;
+            border: 6px solid #222;
+            border-radius: 4px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.8);
+            display: flex;
+            flex-direction: column;
+            position: relative;
+        }
+
+        /* 1. Top Title Bar (CommandCenter Branding) */
+        .title-bar {
+            background-color: #275623;
+            color: white;
+            text-align: center;
+            font-weight: 700;
+            font-size: 13px;
+            padding: 3px 15px;
+            border-bottom: 2px solid #ffe100;
+            letter-spacing: 0.5px;
+            display: flex;
+            justify-content: space-between;
+        }
+
+        .connection-status { font-size: 11px; color: #ff3b30; }
+        .connection-status.connected { color: #00ff00; }
+
+        /* 2. Header Bar */
+        .header-bar {
+            background-color: #495b28;
+            color: white;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 0 10px 0 15px;
+            height: 42px;
+        }
+        .header-title { font-size: 22px; font-weight: 700; letter-spacing: 0.5px; }
+        .header-status { display: flex; align-items: center; height: 100%; }
+
+        .status-items { display: flex; align-items: center; gap: 12px; font-weight: 700; font-size: 15px; padding-right: 15px; border-right: 1px solid #7a8a5b; height: 100%; }
+        .icon-rtk { background: white; color: #495b28; padding: 1px 7px; border-radius: 10px; font-size: 12px; font-weight: 900; }
+
+        .nav-arrows { display: flex; align-items: center; gap: 15px; padding-left: 15px; font-size: 20px; font-weight: bold; }
+        .arrow-btn { cursor: pointer; display: flex; align-items: center; justify-content: center; opacity: 0.9; }
+        .arrow-btn:hover { opacity: 1; transform: scale(1.1); }
+
+        /* 3. Main Workspaces Container */
+        .workspace-container {
+            flex: 1;
+            position: relative;
+            height: calc(100% - 110px);
+            overflow: hidden;
+        }
+
+        .workspace {
+            display: none;
+            width: 100%;
+            height: 100%;
+            position: relative;
+        }
+
+        .workspace.active { display: flex; }
+        .workspace.grid-layout.active { display: grid; }
+
+        /* --- Map Area & Overlays --- */
+        .map-area { flex: 1; position: relative; background-color: #8fa3b3; overflow: hidden; }
+        #map-canvas { width: 100%; height: 100%; z-index: 1; display: block; background-color: #3a4a2a; }
+
+        /* Cross Track HUD */
+        .cross-track-container {
+            position: absolute; top: 0; left: 0; right: 0; height: 30px;
+            background-color: rgba(255, 255, 255, 0.95); z-index: 1000; display: flex; border-bottom: 1px solid #999;
+        }
+        .ct-ticks { flex: 1; background-image: repeating-linear-gradient(to right, transparent, transparent 9px, #ccc 10px); position: relative; display: flex; justify-content: center; }
+        .ct-red-box { position: absolute; background-color: #c41212; width: 25px; height: 100%; left: calc(50% - 12.5px); transition: left 0.1s linear; }
+        .ct-yellow-box {
+            position: absolute; background-color: #ffe100; color: black; font-weight: bold; font-size: 18px;
+            height: 100%; width: 50px; left: 50%; transform: translateX(-50%);
+            display: flex; align-items: center; justify-content: center; border-left: 1px solid #666; border-right: 1px solid #666;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.3);
+        }
+        .ct-yellow-box span { font-size: 12px; margin-left: 2px; font-weight: normal; }
+
+        .heading-tab {
+            position: absolute; top: 30px; left: 50%; transform: translateX(-50%);
+            background-color: rgba(50, 50, 50, 0.85); color: white; z-index: 1000;
+            display: flex; flex-direction: column; align-items: center; padding: 2px 8px;
+            border-bottom-left-radius: 4px; border-bottom-right-radius: 4px; border: 1px solid #777; border-top: none;
+            font-size: 13px; font-weight: bold; min-width: 48px;
+        }
+        .heading-tab .line { background: #aaa; height: 1px; width: 100%; margin: 2px 0; }
+
+        .shank-label { position: absolute; top: 40px; left: 0; z-index: 1000; background-color: rgba(60,60,60,0.7); color: white; padding: 2px 8px; font-size: 14px; }
+        .red-white-arrow {
+            position: absolute; top: 65px; left: 10px; z-index: 1000; width: 30px; height: 15px;
+            background: linear-gradient(to right, #d32f2f 50%, white 50%); clip-path: polygon(10% 0, 100% 0, 90% 100%, 0 100%); border: 1px solid #fff;
+        }
+
+        .map-btn-circle {
+            position: absolute; left: 10px; z-index: 1000; width: 36px; height: 36px; border-radius: 50%;
+            background-color: rgba(50,50,50,0.7); border: 2px solid rgba(255,255,255,0.6); display: flex; justify-content: center; align-items: center; cursor: pointer;
+        }
+        .map-btn-circle svg { width: 20px; height: 20px; fill: white; }
+
+        .flag-circle {
+            position: absolute; bottom: 10px; z-index: 1001; width: 70px; height: 70px; border-radius: 50%;
+            background-color: white; border: 3px solid #333; display: flex; justify-content: center; align-items: center; box-shadow: 2px 2px 5px rgba(0,0,0,0.3);
+        }
+        .flag-circle svg { width: 40px; height: 40px; fill: #111; }
+        .coord-readout { position: absolute; bottom: 5px; right: 5px; z-index: 1000; color: white; font-size: 10px; background: rgba(0,0,0,0.5); padding: 1px 4px; font-family: monospace; }
+
+        .map-btn-right {
+            position: absolute; right: 10px; z-index: 1000; width: 34px; height: 34px; border-radius: 50%;
+            background-color: rgba(50,50,50,0.7); border: 2px solid rgba(255,255,255,0.6); display: flex; justify-content: center; align-items: center;
+        }
+        .map-btn-right svg { width: 18px; height: 18px; fill: white; }
+
+        /* Sidebar Styling */
+        .sidebar { width: 200px; background-color: #e8e4d3; border-left: 2px solid #333; display: flex; flex-direction: column; z-index: 10; }
+        .sb-section { border-bottom: 2px solid #fff; display: flex; flex-direction: column; }
+        .sb-header { background-color: #473e35; color: white; font-size: 10px; font-weight: bold; padding: 3px 0; text-align: center; }
+        .sb-header-light { background-color: #dcd7c6; color: #444; font-size: 11px; font-weight: bold; text-align: center; padding: 3px 0; }
+        .sb-content { padding: 8px 10px; flex: 1; }
+        .sb-title { font-size: 14px; font-weight: bold; color: #111; margin-bottom: 6px; }
+
+        .sb-btn {
+            background: linear-gradient(to bottom, #ffffff, #dcdcdc); border: 1px solid #777; border-radius: 4px;
+            padding: 6px; text-align: center; font-weight: 700; font-size: 13px; color: #111; box-shadow: 0 1px 3px rgba(0,0,0,0.1); cursor: pointer; width: 100%;
+        }
+        .sb-value { font-size: 15px; font-weight: bold; color: #111; margin-top: 8px; line-height: 1; }
+        .sb-label { font-size: 11px; color: #555; }
+        .shift-controls { display: flex; gap: 5px; margin-top: 4px; }
+        .shift-controls .sb-btn { flex: 1; padding: 4px; display: flex; justify-content: center; align-items: center; height: 32px; }
+
+        /* Custom Tractor HUD Overlay */
+        .hud-tractor {
+            position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%);
+            z-index: 500; pointer-events: none; display: flex; flex-direction: column; align-items: center;
+        }
+        .hud-line-fwd { width: 2px; height: 150px; background-color: white; margin-bottom: -5px; }
+        .hud-body { width: 18px; height: 24px; background-color: #367C2B; border-radius: 3px; position: relative; z-index: 2; }
+        .hud-wheel-l { position: absolute; left: -8px; top: 8px; width: 6px; height: 14px; background: #222; border-radius: 1px; box-shadow: 2px 0 0 #222; }
+        .hud-wheel-r { position: absolute; right: -8px; top: 8px; width: 6px; height: 14px; background: #222; border-radius: 1px; box-shadow: -2px 0 0 #222; }
+        .hud-link { width: 4px; height: 30px; background-color: #55ff00; position: relative; z-index: 1; margin-top: -5px; }
+        .hud-boom { width: 180px; height: 4px; background-color: #55ff00; }
+
+        /* Machine Monitor Layout Styles (matches the real G5+ Machine run page:
+           a dense grid of small dark tiles -- SCV/PTO/transmission/hitch/etc --
+           plus a steering settings panel and a map thumbnail) */
+        /* #page-cc hosts three mutually-exclusive states (#mm-9r / #mm-generic /
+           #mm-fallback), toggled via JS display:none/flex -- only one renders at a time. */
+        #page-cc.workspace { padding: 0; }
+        #mm-9r, #mm-generic, #mm-fallback { display: none; width: 100%; height: 100%; }
+
+        /* --- 9R exact match: light cream theme from real G5 CommandCenter screenshots --- */
+        .mm9-page { background-color: #1a1a1a; padding: 4px; height: 100%; }
+        .mm9-grid { display: grid; grid-template-columns: repeat(6, 1fr); grid-template-rows: 1fr 1.3fr; gap: 3px; height: 100%; }
+        .mm9-tile { background-color: #efebda; border: 1px solid #b0aca0; display: flex; overflow: hidden; }
+        .mm9-split { flex-direction: row; }
+        .mm9-half { flex: 1; display: flex; flex-direction: column; padding: 4px 6px; border-right: 1px solid #d8d3c0; }
+        .mm9-half:last-child { border-right: none; }
+        .mm9-label { font-size: 8px; font-weight: 700; color: #444; text-transform: uppercase; line-height: 1.1; margin-bottom: 4px; }
+        .mm9-value-row { display: flex; align-items: baseline; gap: 3px; margin-top: auto; }
+        .mm9-value { font-size: 17px; font-weight: 700; color: #222; }
+        .mm9-value.mm9-real { color: #275623; }
+        .mm9-unit { font-size: 9px; color: #666; }
+
+        .mm9-map-tile { grid-row: span 1; padding: 0; }
+        .mm9-map-tile canvas { width: 100%; height: 100%; display: block; background-color: #3a4a2a; }
+
+        .mm9-block { flex-direction: column; padding: 4px 8px; }
+        .mm9-block-header { background-color: #473e35; color: white; font-size: 9px; font-weight: bold; text-align: center; padding: 2px 0; margin: -4px -8px 4px; }
+        .mm9-trans-row { display: flex; justify-content: space-between; font-size: 12px; font-weight: 700; padding: 1px 0; }
+        .mm9-trans-unit { justify-content: center; color: #666; font-weight: normal; font-size: 10px; }
+        .mm9-trans-mode { text-align: center; font-size: 11px; font-weight: 700; margin-top: 4px; color: #444; }
+        .mm9-power-gauge { height: 10px; background: #d8d3c0; border: 1px solid #999; margin-top: 4px; }
+        .mm9-power-fill { height: 100%; width: 8%; background: #ffe100; }
+
+        /* --- Generic (non-9R) tractor fallback: existing dark tile grid --- */
+        .mm-generic-page { background-color: #16150c; padding: 6px; gap: 6px; display: flex; height: 100%; }
+        .mm-grid {
+            flex: 1;
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            grid-auto-rows: 1fr;
+            gap: 5px;
+        }
+        .mm-tile {
+            background-color: #2a2916;
+            border: 1px solid #454328;
+            border-radius: 3px;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+        }
+        .mm-tile-header {
+            background-color: #473e35;
+            color: #ddd;
+            font-size: 9px;
+            font-weight: bold;
+            text-transform: uppercase;
+            padding: 3px 6px;
+            letter-spacing: 0.3px;
+        }
+        .mm-tile-body {
+            flex: 1;
+            display: flex;
+            align-items: baseline;
+            justify-content: center;
+            gap: 3px;
+            padding: 6px;
+        }
+        .mm-tile-value { font-size: 22px; font-weight: 700; color: #ffe100; }
+        .mm-tile-unit { font-size: 11px; color: #999; }
+        .mm-tile.mm-placeholder .mm-tile-value { color: #666; }
+        .mm-tile.mm-placeholder .mm-tile-header { color: #888; }
+
+        .mm-map-tile { grid-column: span 2; grid-row: span 2; position: relative; }
+        .mm-map-tile canvas { width: 100%; height: 100%; display: block; background-color: #3a4a2a; }
+
+        .mm-steering-panel {
+            width: 160px;
+            background-color: #2a2916;
+            border: 1px solid #454328;
+            border-radius: 3px;
+            padding: 10px;
+            color: white;
+        }
+        .mm-steering-title { font-size: 12px; font-weight: bold; color: #ffe100; margin-bottom: 10px; text-transform: uppercase; }
+        .mm-steering-row { display: flex; justify-content: space-between; font-size: 12px; padding: 6px 0; border-bottom: 1px solid #3a381f; }
+        .mm-placeholder-text { color: #666; }
+
+        .mm-fallback {
+            flex: 1; display: none; flex-direction: column; align-items: center; justify-content: center;
+            color: white; text-align: center; padding: 20px;
+        }
+        .mm-fallback h2 { color: #ffe100; font-size: 26px; margin-bottom: 10px; }
+        .mm-fallback p { max-width: 400px; font-size: 14px; color: #ccc; margin-bottom: 6px; }
+        .mm-fallback code { color: #ffe100; }
+
+        .vehicle-badge { background: #fff; color: #275623; font-weight: 900; padding: 1px 6px; border-radius: 3px; margin-right: 6px; font-size: 11px; }
+
+        /* --- Bottom Toolbar --- */
+        .bottom-toolbar {
+            height: 65px; background-color: #ded9c6; display: flex; border-top: 2px solid #333;
+        }
+        .toolbar-btn {
+            flex: 1; border-right: 1px solid #b5b1a1; display: flex; flex-direction: column; justify-content: flex-start; align-items: center;
+            font-size: 9px; font-weight: 700; color: #111; position: relative; cursor: pointer; padding-top: 6px;
+        }
+        .toolbar-btn:last-child { border-right: none; }
+        .toolbar-btn:hover { background-color: #ebe7d6; }
+        .tb-indicator { position: absolute; bottom: 0; left: 0; width: 100%; height: 4px; background-color: #111; }
+        .toolbar-btn.on .tb-indicator { background-color: #318220; }
+        .toolbar-btn.off .tb-indicator { background-color: #444; }
+        .tb-off-label { position: absolute; bottom: 4px; left: 0; width: 100%; background-color: #111; color: white; font-size: 9px; text-align: center; padding: 1px 0; font-weight: bold; }
+        .tb-on-label { position: absolute; bottom: 4px; left: 0; width: 100%; background-color: #318220; color: white; font-size: 9px; text-align: center; padding: 1px 0; font-weight: bold; }
+        .tb-icon { height: 26px; width: 26px; display: flex; justify-content: center; align-items: center; margin-bottom: 2px; }
+        .tb-icon svg { width: 100%; height: 100%; fill: #111; }
+        .tb-text { text-align: center; line-height: 1.1; padding: 0 2px; }
+        .autotrac-pie { width: 22px; height: 22px; border-radius: 50%; background: conic-gradient(white 0 90deg, white 90deg 180deg, #4287f5 180deg 270deg, white 270deg 360deg); border: 1px solid #111; position: relative; }
+        .autotrac-pie::before { content: ''; position: absolute; top: 0; bottom: 0; left: 50%; width: 1px; background: #111; }
+        .autotrac-pie::after { content: ''; position: absolute; left: 0; right: 0; top: 50%; height: 1px; background: #111; }
+        .menu-btn { background-color: #318220; color: white; }
+        .menu-btn .tb-icon svg { fill: white; }
+        .menu-btn .tb-indicator { background-color: #1d4d12; }
+    </style>
 </head>
 <body>
-  <header>
-    <h1>TasDyn G5 Terminal</h1>
-    <div style="display:flex; align-items:center; gap:16px;">
-      <a href="guidance.html" style="color:var(--accent); font-size:13px; text-decoration:none;">G5 Guidance Display &rarr;</a>
-      <div id="status">
-        <span class="dot"></span>
-        <span class="label"></span>
-      </div>
+
+    <div class="device-bezel">
+        <!-- Top Title Bar -->
+        <div class="title-bar">
+            <span><span class="vehicle-badge" id="vehicle-badge">--</span>G5Plus CommandCenter&trade; Display</span>
+            <span class="connection-status" id="ws-status">DISCONNECTED</span>
+        </div>
+
+        <!-- Header Bar -->
+        <div class="header-bar">
+            <div class="header-title" id="page-title">CommandCenter Guidance</div>
+            <div class="header-status">
+                <div class="status-items">
+                    <span id="clock">10:25</span>
+                    <svg width="20" height="16" viewBox="0 0 24 24" fill="white"><path d="M19.35 10.04C18.67 6.59 15.64 4 12 4 9.11 4 6.6 5.64 5.35 8.04 2.34 8.36 0 10.91 0 14c0 3.31 2.69 6 6 6h13c2.76 0 5-2.24 5-5 0-2.64-2.05-4.78-4.65-4.96z"/><circle cx="19" cy="18" r="4" fill="#1a1a1a"/><text x="17.5" y="21" fill="white" font-size="10" font-weight="bold">!</text></svg>
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="white"><path d="M21 3L3 10.53v.98l6.84 2.65L12.48 21h.98L21 3z"/></svg>
+                    <span class="icon-rtk">RTK</span>
+                </div>
+                <!-- Navigation Arrows -->
+                <div class="nav-arrows">
+                    <div class="arrow-btn" onclick="prevPage()">
+                        <svg width="24" height="24" viewBox="0 0 24 24" fill="white"><path d="M20 11H7.83l5.59-5.59L12 4l-8 8 8 8 1.41-1.41L7.83 13H20v-2z"/></svg>
+                    </div>
+                    <div class="arrow-btn" onclick="nextPage()">
+                        <svg width="24" height="24" viewBox="0 0 24 24" fill="white"><path d="M12 4l-1.41 1.41L16.17 11H4v2h12.17l-5.58 5.59L12 20l8-8z"/></svg>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Workspaces Container -->
+        <div class="workspace-container">
+
+            <!-- PAGE 1: CommandCenter Guidance Run Screen -->
+            <div class="workspace active" id="page-1">
+                <div class="map-area">
+                    <div class="cross-track-container">
+                        <div class="ct-ticks"><div class="ct-red-box"></div></div>
+                        <div class="ct-yellow-box">0<span>in</span></div>
+                    </div>
+                    <div class="heading-tab"><span id="heading-value">E 90&deg;</span><div class="line"></div>0</div>
+
+                    <div class="shank-label">Shank</div>
+                    <div class="red-white-arrow"></div>
+
+                    <div class="map-btn-circle" style="top: 100px;"><svg viewBox="0 0 24 24"><path d="M3 3v18h18V3H3zm16 16H5V5h14v14zm-6-8h4v6h-4zM7 11h4v6H7z"/></svg></div>
+                    <div class="map-btn-circle" style="top: 145px;"><svg viewBox="0 0 24 24"><path d="M12 4l-8 8h6v8h4v-8h6z"/></svg></div>
+                    <div class="map-btn-circle" style="bottom: 120px;"><svg viewBox="0 0 24 24"><path d="M3 18h18v-2H3v2zm0-5h18v-2H3v2zm0-7v2h18V6H3z"/></svg></div>
+
+                    <div class="flag-circle" style="left: 10px; z-index: 1001;"><svg viewBox="0 0 24 24"><path d="M14.4 6L14 4H5v17h2v-7h5.6l.4 2h7V6z"/></svg></div>
+                    <div class="flag-circle" style="left: 70px; z-index: 1000;"><svg viewBox="0 0 24 24"><path d="M14.4 6L14 4H5v17h2v-7h5.6l.4 2h7V6z"/></svg></div>
+
+                    <div class="hud-tractor">
+                        <div class="hud-line-fwd"></div>
+                        <div class="hud-body"><div class="hud-wheel-l"></div><div class="hud-wheel-r"></div></div>
+                        <div class="hud-link"></div><div class="hud-boom"></div>
+                    </div>
+
+                    <div class="coord-readout" id="coord-readout">x: 0.0  z: 0.0</div>
+                    <canvas id="map-canvas"></canvas>
+                </div>
+
+                <div class="sidebar">
+                    <div class="sb-section" style="flex: 1;">
+                        <div class="sb-header">CommandCenter Guidance</div>
+                        <div class="sb-content">
+                            <div class="sb-title" id="guidance-status">Guidance: Manual</div>
+                            <div class="sb-btn">Set Track</div>
+                            <div class="sb-value">50.299ft</div>
+                            <div class="sb-label">Track Spacing</div>
+                        </div>
+                        <div class="sb-header sb-header-light">Shift Track</div>
+                        <div class="sb-content">
+                            <div class="sb-btn" style="padding: 2px;"><svg width="24" height="24" viewBox="0 0 24 24"><path d="M6 16h4v4h4v-4h4v-4h-4V8h-4v4H6v4zm-2-8v8h2v-8H4zm14 0v8h2v-8h-2z" fill="#111"/></svg></div>
+                            <div class="shift-controls">
+                                <div class="sb-btn"><svg viewBox="0 0 24 24" width="16" height="16"><path d="M14 7l-5 5 5 5V7z"/><path d="M5 6h2v12H5z"/></svg></div>
+                                <div class="sb-btn"><svg viewBox="0 0 24 24" width="16" height="16"><path d="M10 7l5 5-5 5V7z"/><path d="M17 6h2v12h-2z"/></svg></div>
+                            </div>
+                            <div class="sb-value" style="margin-top: 10px;">1.0 in</div>
+                            <div class="sb-label">Shift Increment</div>
+                        </div>
+                    </div>
+                    <div class="sb-section" style="flex: 0.6;">
+                        <div class="sb-header">Machine</div>
+                        <div class="sb-content">
+                            <div class="sb-value" id="speed-value">0.0 <span style="font-size:11px;font-weight:normal;">km/h</span></div>
+                            <div class="sb-label">Speed</div>
+                            <div class="sb-value" id="rpm-value" style="margin-top: 8px;">0</div>
+                            <div class="sb-label">Engine RPM</div>
+                        </div>
+                    </div>
+                    <div class="sb-section" style="flex: 0.4;">
+                        <div class="sb-header">Location</div>
+                        <div class="sb-content">
+                            <div class="sb-title">5 South</div>
+                            <div class="sb-label">Field</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- PAGE 2: Machine Monitor / Default Tractor Run Page.
+                 Three mutually-exclusive states, toggled by JS based on vehicleModel/vehicleCategory:
+                   #mm-9r       -- exact match for real G5 CommandCenter 9R screenshots (light cream theme)
+                   #mm-generic  -- dark tile grid, shown for any OTHER tractor (SCV/PTO/hitch guesses)
+                   #mm-fallback -- plain message, shown for non-tractor categories -->
+            <div class="workspace" id="page-cc">
+
+                <!-- 9R exact match: real tile grid/labels from G5 CommandCenter simulator
+                     screenshots. Tiles marked mm9-placeholder show "--" -- the mod doesn't
+                     export fuel/temperature/pressure/transmission-gear/area data yet. -->
+                <div class="mm9-page" id="mm-9r">
+                    <div class="mm9-grid">
+                        <div class="mm9-tile mm9-split">
+                            <div class="mm9-half"><div class="mm9-label">Readings<br>Counters A</div><div class="mm9-value-row"><span class="mm9-value" id="mm9-fuel-hr">--</span><span class="mm9-unit">gal/h</span></div></div>
+                            <div class="mm9-half"><div class="mm9-label">Counters A</div><div class="mm9-value-row"><span class="mm9-value" id="mm9-fuel-ac">--</span><span class="mm9-unit">gal/ac</span></div></div>
+                        </div>
+                        <div class="mm9-tile mm9-split">
+                            <div class="mm9-half"><div class="mm9-label">Readings<br>Machine</div><div class="mm9-value-row"><span class="mm9-value" id="mm9-idle">--</span><span class="mm9-unit">h idle</span></div></div>
+                            <div class="mm9-half"><div class="mm9-label">Machine</div><div class="mm9-value-row"><span class="mm9-value mm9-real" id="mm9-speed">0.00</span><span class="mm9-unit">mi/hr</span></div></div>
+                        </div>
+                        <div class="mm9-tile mm9-split">
+                            <div class="mm9-half"><div class="mm9-label">Machine</div><div class="mm9-value-row"><span class="mm9-value" id="mm9-coolant">--</span><span class="mm9-unit">&deg;F</span></div></div>
+                            <div class="mm9-half"><div class="mm9-label">Machine</div><div class="mm9-value-row"><span class="mm9-value" id="mm9-fuel-pct">--</span><span class="mm9-unit">%</span></div></div>
+                        </div>
+                        <div class="mm9-tile mm9-split">
+                            <div class="mm9-half"><div class="mm9-label">Machine</div><div class="mm9-value-row"><span class="mm9-value mm9-real" id="mm9-heading">0&deg;</span></div></div>
+                            <div class="mm9-half"><div class="mm9-label">Machine</div><div class="mm9-value-row"><span class="mm9-value" id="mm9-temp2">--</span><span class="mm9-unit">&deg;F</span></div></div>
+                        </div>
+                        <div class="mm9-tile mm9-split">
+                            <div class="mm9-half"><div class="mm9-label">Readings<br>Counters A</div><div class="mm9-value-row"><span class="mm9-value" id="mm9-area-rate">--</span><span class="mm9-unit">ac/h</span></div></div>
+                            <div class="mm9-half"><div class="mm9-label">Machine</div><div class="mm9-value-row"><span class="mm9-value" id="mm9-oil1">--</span><span class="mm9-unit">psi</span></div></div>
+                        </div>
+                        <div class="mm9-tile mm9-split">
+                            <div class="mm9-half"><div class="mm9-label">Readings<br>Machine</div><div class="mm9-value-row"><span class="mm9-value mm9-real" id="mm9-rpm">0</span><span class="mm9-unit">rpm</span></div></div>
+                            <div class="mm9-half"><div class="mm9-label">Counters A</div><div class="mm9-value-row"><span class="mm9-value" id="mm9-area">--</span><span class="mm9-unit">ac</span></div></div>
+                        </div>
+
+                        <div class="mm9-tile mm9-map-tile">
+                            <canvas id="map-canvas-mini9"></canvas>
+                        </div>
+                        <div class="mm9-tile mm9-split">
+                            <div class="mm9-half"><div class="mm9-label">Readings<br>Counters A</div><div class="mm9-value-row"><span class="mm9-value" id="mm9-fuel-hr2">--</span><span class="mm9-unit">gal/h</span></div></div>
+                            <div class="mm9-half"><div class="mm9-label">Machine</div><div class="mm9-value-row"><span class="mm9-value" id="mm9-fuel-hr2b">--</span></div></div>
+                        </div>
+                        <div class="mm9-tile mm9-block">
+                            <div class="mm9-block-header">Transmission</div>
+                            <div class="mm9-trans-row"><span>F2</span><span class="mm9-value">--</span></div>
+                            <div class="mm9-trans-row"><span>F1</span><span class="mm9-value">--</span></div>
+                            <div class="mm9-trans-row mm9-trans-unit">MPH</div>
+                            <div class="mm9-trans-row"><span>R1</span><span class="mm9-value">--</span></div>
+                            <div class="mm9-trans-row"><span>R2</span><span class="mm9-value">--</span></div>
+                            <div class="mm9-trans-mode">Manual</div>
+                        </div>
+                        <div class="mm9-tile mm9-block">
+                            <div class="mm9-block-header">Engine Power</div>
+                            <div class="mm9-power-gauge"><div class="mm9-power-fill"></div></div>
+                            <div class="mm9-value-row" style="justify-content:center; margin-top:6px;"><span class="mm9-value" id="mm9-hours">--</span><span class="mm9-unit">h</span></div>
+                            <div class="mm9-block-header" style="margin-top:8px;">Max Eng Speed</div>
+                            <div class="mm9-value-row" style="justify-content:center;"><span class="mm9-value" id="mm9-max-eng">--</span></div>
+                        </div>
+                        <div class="mm9-tile mm9-split">
+                            <div class="mm9-half"><div class="mm9-label">Readings<br>Counters A</div><div class="mm9-value-row"><span class="mm9-value" id="mm9-fuel-ac2">--</span><span class="mm9-unit">gal/ac</span></div></div>
+                            <div class="mm9-half"><div class="mm9-label">Machine</div><div class="mm9-value-row"><span class="mm9-value" id="mm9-oil2">--</span><span class="mm9-unit">psi</span></div></div>
+                        </div>
+                        <div class="mm9-tile mm9-split">
+                            <div class="mm9-half"><div class="mm9-label">Counters A<br>Avg</div><div class="mm9-value-row"><span class="mm9-value" id="mm9-avg-area">--</span><span class="mm9-unit">ac/h</span></div></div>
+                            <div class="mm9-half"><div class="mm9-label">Work</div><div class="mm9-value-row"><span class="mm9-value" id="mm9-work-hours">--</span><span class="mm9-unit">h</span></div></div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Generic tractor fallback (any tractor that isn't specifically a 9R) -->
+                <div class="mm-generic-page" id="mm-generic">
+                    <div class="mm-grid" id="mm-grid">
+                        <div class="mm-tile">
+                            <div class="mm-tile-header">Transmission</div>
+                            <div class="mm-tile-body"><div class="mm-tile-value" id="mm-speed">0.0</div><div class="mm-tile-unit">km/h</div></div>
+                        </div>
+                        <div class="mm-tile">
+                            <div class="mm-tile-header">Engine RPM</div>
+                            <div class="mm-tile-body"><div class="mm-tile-value" id="mm-rpm">0</div><div class="mm-tile-unit">rpm</div></div>
+                        </div>
+                        <div class="mm-tile">
+                            <div class="mm-tile-header">Heading</div>
+                            <div class="mm-tile-body"><div class="mm-tile-value" id="mm-heading">0&deg;</div></div>
+                        </div>
+                        <div class="mm-tile">
+                            <div class="mm-tile-header">Rear Hitch</div>
+                            <div class="mm-tile-body"><div class="mm-tile-value" id="mm-hitch">0</div><div class="mm-tile-unit">%</div></div>
+                        </div>
+
+                        <div class="mm-tile mm-placeholder"><div class="mm-tile-header">SCV I</div><div class="mm-tile-body"><div class="mm-tile-value">--</div></div></div>
+                        <div class="mm-tile mm-placeholder"><div class="mm-tile-header">SCV II</div><div class="mm-tile-body"><div class="mm-tile-value">--</div></div></div>
+                        <div class="mm-tile mm-placeholder"><div class="mm-tile-header">SCV III</div><div class="mm-tile-body"><div class="mm-tile-value">--</div></div></div>
+                        <div class="mm-tile mm-placeholder"><div class="mm-tile-header">SCV IV</div><div class="mm-tile-body"><div class="mm-tile-value">--</div></div></div>
+
+                        <div class="mm-tile mm-placeholder"><div class="mm-tile-header">SCV V</div><div class="mm-tile-body"><div class="mm-tile-value">--</div></div></div>
+                        <div class="mm-tile mm-placeholder"><div class="mm-tile-header">SCV VI</div><div class="mm-tile-body"><div class="mm-tile-value">--</div></div></div>
+                        <div class="mm-tile mm-placeholder"><div class="mm-tile-header">PTO Gear</div><div class="mm-tile-body"><div class="mm-tile-value">--</div></div></div>
+                        <div class="mm-tile mm-placeholder"><div class="mm-tile-header">Rear PTO</div><div class="mm-tile-body"><div class="mm-tile-value">--</div></div></div>
+
+                        <div class="mm-tile">
+                            <div class="mm-tile-header">Implement Width</div>
+                            <div class="mm-tile-body"><div class="mm-tile-value" id="mm-width">0.0</div><div class="mm-tile-unit">m</div></div>
+                        </div>
+                        <div class="mm-tile mm-placeholder"><div class="mm-tile-header">Fuel Rate</div><div class="mm-tile-body"><div class="mm-tile-value">--</div><div class="mm-tile-unit">gal/h</div></div></div>
+                        <div class="mm-tile mm-placeholder"><div class="mm-tile-header">Max Eng Speed</div><div class="mm-tile-body"><div class="mm-tile-value">--</div></div></div>
+
+                        <div class="mm-tile mm-map-tile">
+                            <div class="mm-tile-header">Position</div>
+                            <canvas id="map-canvas-mini"></canvas>
+                        </div>
+                    </div>
+
+                    <div class="mm-steering-panel" id="mm-steering-panel">
+                        <div class="mm-steering-title">Steering</div>
+                        <div class="mm-steering-row"><span>Ratio</span><span class="mm-placeholder-text">--</span></div>
+                        <div class="mm-steering-row"><span>Sensitivity</span><span class="mm-placeholder-text">--</span></div>
+                        <div class="mm-steering-row"><span>Resistance</span><span class="mm-placeholder-text">--</span></div>
+                    </div>
+                </div>
+
+                <div class="mm-fallback" id="mm-fallback">
+                    <h2>Machine Monitor</h2>
+                    <p>Not yet supported for vehicle type <code id="mm-fallback-type">--</code>.</p>
+                    <p>The Guidance page still works normally for this machine.</p>
+                </div>
+            </div>
+
+        </div>
+
+        <!-- 4. Bottom Toolbar -->
+        <div class="bottom-toolbar">
+            <div class="toolbar-btn"><div class="tb-icon"><svg viewBox="0 0 24 24"><path d="M4 6h16v2H4zm0 5h16v2H4zm0 5h16v2H4z"/><path d="M2.5 5.5L4 7l2.5-2.5L5 3 2.5 5.5zm0 5L4 12l2.5-2.5L5 8l-2.5 2.5zm0 5L4 17l2.5-2.5L5 13l-2.5 2.5z"/></svg></div><div class="tb-text">SETUP</div><div class="tb-indicator"></div></div>
+            <div class="toolbar-btn off"><div class="tb-icon"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="8" stroke="#111" stroke-width="2" fill="#d3d3d3"/><circle cx="12" cy="12" r="4" fill="#999"/></svg></div><div class="tb-text">WORK</div><div class="tb-off-label">OFF</div><div class="tb-indicator"></div></div>
+            <div class="toolbar-btn on"><div class="tb-icon"><svg viewBox="0 0 24 24"><path d="M3 20h18L16 4H8L3 20z" fill="#ccc" stroke="#111" stroke-width="1.5"/><path d="M8 4v16M12 4v16M16 4v16" stroke="#111" stroke-width="1.5"/></svg></div><div class="tb-text">SECTION CTL</div><div class="tb-on-label">ON</div><div class="tb-indicator"></div></div>
+            <div class="toolbar-btn"><div class="tb-icon"><svg viewBox="0 0 24 24"><path d="M3 20h18L16 4H8L3 20z" fill="#ccc" stroke="#111" stroke-width="1.5"/><path d="M8 4v16M12 4v16M16 4v16" stroke="#111" stroke-width="1.5"/></svg></div><div class="tb-text">SECTION CTL</div><div class="tb-indicator"></div></div>
+            <div class="toolbar-btn" id="autotrac-btn"><div class="tb-icon"><div class="autotrac-pie"></div></div><div class="tb-text">AUTOTRAC</div><div class="tb-indicator"></div></div>
+            <div class="toolbar-btn"><div class="tb-icon"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9" fill="none" stroke="#111" stroke-width="1.5"/><path d="M12 6v12M8 10l4-4 4 4" stroke="#111" stroke-width="1.5" fill="none"/></svg></div><div class="tb-text">GUIDANCE</div><div class="tb-indicator"></div></div>
+            <div class="toolbar-btn"><div class="tb-icon"><svg viewBox="0 0 24 24"><path d="M5 12h14M15 8l4 4-4 4M9 16l-4-4 4-4" stroke="#111" stroke-width="2" fill="none"/></svg></div><div class="tb-text">SWAP TRACK</div><div class="tb-indicator"></div></div>
+            <div class="toolbar-btn"><div class="tb-icon"><svg viewBox="0 0 24 24"><path d="M12 4v16M8 8v8M16 8v8" stroke="#111" stroke-width="2" stroke-dasharray="3,3" fill="none"/></svg></div><div class="tb-text">QUICK LINE</div><div class="tb-indicator"></div></div>
+            <div class="toolbar-btn"><div class="tb-icon" style="font-weight: 900; font-size: 16px; font-style: italic;">ISO</div><div class="tb-text">ISOBUS VT</div><div class="tb-indicator"></div></div>
+            <div class="toolbar-btn"><div class="tb-icon"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="4" fill="none" stroke="#111" stroke-width="2"/><path d="M12 2v3M12 19v3M2 12h3M19 12h3M5 5l2 2M17 17l2 2M19 5l-2 2M5 19l2-2" stroke="#111" stroke-width="2"/></svg></div><div class="tb-text">DISPLAY</div><div class="tb-indicator"></div></div>
+            <div class="toolbar-btn"><div class="tb-icon"><svg viewBox="0 0 24 24"><path d="M14.4 6L14 4H5v17h2v-7h5.6l.4 2h7V6z"/></svg></div><div class="tb-text">FLAGS</div><div class="tb-indicator"></div></div>
+            <div class="toolbar-btn"><div class="tb-icon" style="font-size: 22px; font-weight: bold;">?</div><div class="tb-text">HELP</div><div class="tb-indicator"></div></div>
+            <div class="toolbar-btn menu-btn"><div class="tb-icon"><svg viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/></svg></div><div class="tb-text">MENU</div><div class="tb-indicator"></div></div>
+        </div>
+
     </div>
-  </header>
 
-  <main>
-    <div class="tile"><div class="label">Speed</div><div class="value"><span id="speed">--</span><span class="unit">km/h</span></div></div>
-    <div class="tile"><div class="label">Engine RPM</div><div class="value"><span id="rpm">--</span></div></div>
-    <div class="tile"><div class="label">Heading</div><div class="value"><span id="heading">--</span><span class="unit">°</span></div></div>
-    <div class="tile"><div class="label">Implement</div><div class="value"><span id="implement">--</span></div></div>
-    <div class="tile"><div class="label">Implement Width</div><div class="value"><span id="width">--</span><span class="unit">m</span></div></div>
-    <div class="tile"><div class="label">Cross-Track Error</div><div class="value"><span id="cte">--</span><span class="unit">m</span></div></div>
-  </main>
+    <!-- Shared bridge WebSocket client -->
+    <script src="telemetry-client.js"></script>
+    <script>
+        // --- Page navigation (real toggle between Guidance and Machine Monitor pages) ---
+        const pageConfigs = [
+            { id: 'page-1', title: 'CommandCenter Guidance' },
+            { id: 'page-cc', title: 'Machine Monitor' }
+        ];
+        let currentPageIndex = 0;
 
-  <footer>
-    <button id="autotracBtn">AutoTrac: Off</button>
-  </footer>
+        function goToPage(index) {
+            if (index < 0) index = pageConfigs.length - 1;
+            if (index >= pageConfigs.length) index = 0;
 
-  <script src="app.js"></script>
+            currentPageIndex = index;
+            document.getElementById('page-title').innerText = pageConfigs[currentPageIndex].title;
+
+            document.querySelectorAll('.workspace').forEach(el => el.classList.remove('active'));
+            document.getElementById(pageConfigs[currentPageIndex].id).classList.add('active');
+
+            // Canvases read 0x0 while their workspace was display:none, so
+            // re-measure them now that the container is visible again (covers both
+            // the main guidance map on page-1 and whichever mini-map is showing on page-cc).
+            setTimeout(resizeMapCanvas, 10);
+        }
+        function nextPage() { goToPage(currentPageIndex + 1); }
+        function prevPage() { goToPage(currentPageIndex - 1); }
+
+        // --- Live in-game map (page-1) ---
+        // No basemap imagery -- FS25 farms are fictional, so real-world satellite
+        // tiles would show the wrong place entirely. Instead this renders actual
+        // world coordinates from the mod (getWorldTranslation) directly: a scrolling
+        // grid, a driven trail, and the tractor fixed at screen center.
+        const mapCanvas = document.getElementById('map-canvas');
+        const mapCtx = mapCanvas.getContext('2d');
+        const miniMapCanvas = document.getElementById('map-canvas-mini');
+        const miniMapCtx = miniMapCanvas.getContext('2d');
+        const miniMapCanvas9 = document.getElementById('map-canvas-mini9');
+        const miniMapCtx9 = miniMapCanvas9.getContext('2d');
+        const hudTractor = document.querySelector('.hud-tractor');
+        const coordReadout = document.getElementById('coord-readout');
+
+        const METERS_VISIBLE = 150;
+        const METERS_VISIBLE_MINI = 400; // wider overview for the small Machine Monitor thumbnail
+        const GRID_SPACING_M = 25;
+        const TRAIL_MIN_STEP_M = 1;
+        const TRAIL_MAX_POINTS = 500;
+
+        let trail = [];
+        let lastTrailPoint = null;
+
+        function resizeMapCanvas() {
+            const rect = mapCanvas.parentElement.getBoundingClientRect();
+            mapCanvas.width = rect.width;
+            mapCanvas.height = rect.height;
+
+            const miniRect = miniMapCanvas.parentElement.getBoundingClientRect();
+            miniMapCanvas.width = miniRect.width;
+            miniMapCanvas.height = miniRect.height;
+
+            const mini9Rect = miniMapCanvas9.parentElement.getBoundingClientRect();
+            miniMapCanvas9.width = mini9Rect.width;
+            miniMapCanvas9.height = mini9Rect.height;
+        }
+        window.addEventListener('resize', resizeMapCanvas);
+        resizeMapCanvas();
+
+        function updateTrail(x, z) {
+            if (!lastTrailPoint || Math.hypot(x - lastTrailPoint.x, z - lastTrailPoint.z) >= TRAIL_MIN_STEP_M) {
+                trail.push({ x, z });
+                if (trail.length > TRAIL_MAX_POINTS) trail.shift();
+                lastTrailPoint = { x, z };
+            }
+        }
+
+        function drawMapOn(canvas, ctx, worldX, worldZ, metersVisible) {
+            const w = canvas.width;
+            const h = canvas.height;
+            const pxPerMeter = w / metersVisible;
+
+            ctx.fillStyle = '#3a4a2a';
+            ctx.fillRect(0, 0, w, h);
+
+            ctx.strokeStyle = 'rgba(255,255,255,0.15)';
+            ctx.lineWidth = 1;
+
+            const startGridX = Math.floor((worldX - metersVisible) / GRID_SPACING_M) * GRID_SPACING_M;
+            for (let gx = startGridX; gx < worldX + metersVisible; gx += GRID_SPACING_M) {
+                const cx = w / 2 + (gx - worldX) * pxPerMeter;
+                ctx.beginPath();
+                ctx.moveTo(cx, 0);
+                ctx.lineTo(cx, h);
+                ctx.stroke();
+            }
+            const startGridZ = Math.floor((worldZ - metersVisible) / GRID_SPACING_M) * GRID_SPACING_M;
+            for (let gz = startGridZ; gz < worldZ + metersVisible; gz += GRID_SPACING_M) {
+                const cy = h / 2 + (gz - worldZ) * pxPerMeter;
+                ctx.beginPath();
+                ctx.moveTo(0, cy);
+                ctx.lineTo(w, cy);
+                ctx.stroke();
+            }
+
+            if (trail.length > 1) {
+                ctx.strokeStyle = '#ffe100';
+                ctx.lineWidth = 2;
+                ctx.beginPath();
+                trail.forEach((p, i) => {
+                    const cx = w / 2 + (p.x - worldX) * pxPerMeter;
+                    const cy = h / 2 + (p.z - worldZ) * pxPerMeter;
+                    if (i === 0) ctx.moveTo(cx, cy); else ctx.lineTo(cx, cy);
+                });
+                ctx.stroke();
+            }
+
+            // Vehicle marker
+            ctx.fillStyle = '#ffde00';
+            ctx.beginPath();
+            ctx.arc(w / 2, h / 2, 3, 0, Math.PI * 2);
+            ctx.fill();
+        }
+
+        function drawMap(worldX, worldZ) {
+            drawMapOn(mapCanvas, mapCtx, worldX, worldZ, METERS_VISIBLE);
+            drawMapOn(miniMapCanvas, miniMapCtx, worldX, worldZ, METERS_VISIBLE_MINI);
+            drawMapOn(miniMapCanvas9, miniMapCtx9, worldX, worldZ, METERS_VISIBLE_MINI);
+        }
+
+        const MAX_TRACKING_INCHES = 36;
+        const METERS_TO_INCHES = 39.3701;
+
+        const xtrackIndicator = document.querySelector('.ct-red-box');
+        const xtrackVal = document.querySelector('.ct-yellow-box');
+        const headingValueEl = document.getElementById('heading-value');
+        const guidanceStatusEl = document.getElementById('guidance-status');
+        const autotracBtn = document.getElementById('autotrac-btn');
+        const speedValueEl = document.getElementById('speed-value');
+        const rpmValueEl = document.getElementById('rpm-value');
+
+        // Machine Monitor page -- generic (non-9R) tractor grid
+        const mmSpeedEl = document.getElementById('mm-speed');
+        const mmRpmEl = document.getElementById('mm-rpm');
+        const mmHeadingEl = document.getElementById('mm-heading');
+        const mmHitchEl = document.getElementById('mm-hitch');
+        const mmWidthEl = document.getElementById('mm-width');
+        const vehicleBadgeEl = document.getElementById('vehicle-badge');
+
+        // Machine Monitor page -- exact 9R match
+        const mm9SpeedEl = document.getElementById('mm9-speed');
+        const mm9RpmEl = document.getElementById('mm9-rpm');
+        const mm9HeadingEl = document.getElementById('mm9-heading');
+
+        // Machine Monitor page -- state containers (mutually exclusive)
+        const mm9El = document.getElementById('mm-9r');
+        const mmGenericEl = document.getElementById('mm-generic');
+        const mmFallbackEl = document.getElementById('mm-fallback');
+        const mmFallbackTypeEl = document.getElementById('mm-fallback-type');
+        const SUPPORTED_MACHINE_MONITOR_CATEGORIES = ['tractor'];
+        const KPH_TO_MPH = 0.621371;
+
+        const COMPASS_POINTS = ['N', 'NE', 'E', 'SE', 'S', 'SW', 'W', 'NW'];
+        function compassLabel(headingDeg) {
+            return COMPASS_POINTS[Math.round(headingDeg / 45) % 8];
+        }
+
+        function updateCrossTrackError(errorInches) {
+            xtrackVal.innerHTML = `${Math.abs(errorInches).toFixed(1)}<span>in</span>`;
+            const clampedError = Math.max(-MAX_TRACKING_INCHES, Math.min(MAX_TRACKING_INCHES, errorInches));
+            const percentageOffset = (clampedError / MAX_TRACKING_INCHES) * 50;
+            xtrackIndicator.style.left = `calc(50% - 12.5px + ${percentageOffset}%)`;
+        }
+
+        // AutoTrac's ON/OFF state is a real DOM element (.tb-on-label/.tb-off-label),
+        // not just a CSS class, so it has to be inserted/removed, not toggled.
+        function updateAutotracButton(active) {
+            autotracBtn.classList.toggle('on', active);
+            autotracBtn.classList.toggle('off', !active);
+
+            const existingLabel = autotracBtn.querySelector('.tb-on-label, .tb-off-label');
+            if (existingLabel) existingLabel.remove();
+
+            const label = document.createElement('div');
+            label.className = active ? 'tb-on-label' : 'tb-off-label';
+            label.textContent = active ? 'ON' : 'OFF';
+            autotracBtn.insertBefore(label, autotracBtn.querySelector('.tb-indicator'));
+        }
+
+        autotracBtn.addEventListener('click', () => {
+            const nowActive = !autotracBtn.classList.contains('on');
+            TasDynTelemetry.sendCommand('TOGGLE_AUTOTRAC', nowActive);
+        });
+
+        TasDynTelemetry.connect((payload) => {
+            const implementLowered = !!payload.implementLowered;
+
+            updateCrossTrackError((payload.crossTrackError || 0) * METERS_TO_INCHES);
+            headingValueEl.innerHTML = `${compassLabel(payload.heading || 0)} ${Math.round(payload.heading || 0)}&deg;`;
+            guidanceStatusEl.textContent = payload.guidanceActive
+                ? `Guidance: ${payload.guidanceMode} (Active)`
+                : 'Guidance: Manual';
+            updateAutotracButton(!!payload.guidanceActive);
+            speedValueEl.innerHTML = `${(payload.speed || 0).toFixed(1)} <span style="font-size:11px;font-weight:normal;">km/h</span>`;
+            rpmValueEl.textContent = Math.round(payload.rpm || 0);
+
+            mmSpeedEl.textContent = (payload.speed || 0).toFixed(1);
+            mmRpmEl.textContent = Math.round(payload.rpm || 0);
+            mmHeadingEl.innerHTML = `${Math.round(payload.heading || 0)}&deg;`;
+            mmHitchEl.textContent = implementLowered ? '100' : '0';
+            mmWidthEl.textContent = (payload.implementWidth || 0).toFixed(1);
+            vehicleBadgeEl.textContent = payload.vehicleName || '--';
+
+            mm9SpeedEl.textContent = ((payload.speed || 0) * KPH_TO_MPH).toFixed(2);
+            mm9RpmEl.textContent = Math.round(payload.rpm || 0);
+            mm9HeadingEl.innerHTML = `${Math.round(payload.heading || 0)}&deg;`;
+
+            // Three mutually-exclusive Machine Monitor states: exact 9R match,
+            // generic tractor grid, or the not-yet-supported fallback message.
+            const category = payload.vehicleCategory || 'other';
+            const model = payload.vehicleModel || 'unknown';
+            const isTractor = SUPPORTED_MACHINE_MONITOR_CATEGORIES.includes(category);
+            const is9R = isTractor && model === '9R';
+
+            const mm9WasVisible = mm9El.style.display === 'block';
+            const mmGenericWasVisible = mmGenericEl.style.display === 'flex';
+
+            mm9El.style.display = is9R ? 'block' : 'none';
+            mmGenericEl.style.display = (isTractor && !is9R) ? 'flex' : 'none';
+            mmFallbackEl.style.display = isTractor ? 'none' : 'flex';
+            mmFallbackTypeEl.textContent = category;
+
+            // The mini-map canvases read 0x0 while their container was hidden, so
+            // re-measure them right after a visibility change flips one back on.
+            if ((is9R && !mm9WasVisible) || (isTractor && !is9R && !mmGenericWasVisible)) {
+                setTimeout(resizeMapCanvas, 10);
+            }
+
+            if (typeof payload.x === 'number' && typeof payload.z === 'number') {
+                updateTrail(payload.x, payload.z);
+                drawMap(payload.x, payload.z);
+                coordReadout.textContent = `x: ${payload.x.toFixed(1)}  z: ${payload.z.toFixed(1)}`;
+            }
+            hudTractor.style.transform = `translate(-50%, -50%) rotate(${payload.heading || 0}deg)`;
+        });
+
+        goToPage(0);
+    </script>
 </body>
 </html>
