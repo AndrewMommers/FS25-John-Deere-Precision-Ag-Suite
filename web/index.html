@@ -13,20 +13,26 @@
             font-family: "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
             height: 100vh;
             overflow: hidden;
+            display: flex;
+            justify-content: center;
+            align-items: center;
         }
 
-        /* Fills the browser window edge-to-edge (was a fixed 1024x600 device
-           mockup frame). Elements positioned with absolute pixel offsets --
-           map buttons, heading tab, flag circles -- were tuned against that
-           1024x600 reference and may sit slightly off-scale at other window
-           sizes; flag anything that looks visibly wrong and it can be tightened. */
+        /* Fixed at the original tuned 1024x600 design size -- every icon,
+           padding, and absolute-pixel position in this stylesheet is tuned
+           against that. Filling the actual browser window is handled by
+           scaling this whole box up via JS (transform: scale, see bottom of
+           script), which is a true zoom and preserves every proportion
+           exactly, rather than reflowing the grid/flex layout to arbitrary
+           window dimensions (which breaks icon/spacing proportions). */
         .device-bezel {
-            width: 100vw;
-            height: 100vh;
+            width: 1024px;
+            height: 600px;
             background-color: #000;
             display: flex;
             flex-direction: column;
             position: relative;
+            transform-origin: center center;
         }
 
         /* 1. Top Title Bar (CommandCenter Branding) */
@@ -208,7 +214,10 @@
         .mm9-trans-row { display: flex; justify-content: space-between; font-size: 12px; font-weight: 700; padding: 1px 0; }
         .mm9-trans-unit { justify-content: center; color: #666; font-weight: normal; font-size: 10px; }
         .mm9-trans-mode { text-align: center; font-size: 11px; font-weight: 700; margin-top: 4px; color: #444; }
-        .mm9-power-gauge { height: 10px; background: #d8d3c0; border: 1px solid #999; margin-top: 4px; }
+        .mm9-power-gauge {
+            height: 16px; background: #d8d3c0; border: 1px solid #999; margin-top: 4px;
+            clip-path: polygon(0% 38%, 100% 0%, 100% 100%, 0% 62%);
+        }
         .mm9-power-fill { height: 100%; width: 8%; background: #ffe100; }
 
         .mm-fallback {
@@ -503,6 +512,19 @@
         let lastTrailPoint = null;
         let fields = []; // real field boundary polygons, [{ id, points: [[x,z], ...] }]
 
+        // Scale the fixed 1024x600 design up to fill the actual browser window,
+        // preserving aspect ratio (letterboxes if the window ratio differs).
+        // Must run before resizeMapCanvas() below, since canvas backing-buffer
+        // sizing reads the post-transform (already-scaled) rendered size.
+        const deviceBezel = document.querySelector('.device-bezel');
+        const DESIGN_WIDTH = 1024;
+        const DESIGN_HEIGHT = 600;
+        function scaleToFit() {
+            const scale = Math.min(window.innerWidth / DESIGN_WIDTH, window.innerHeight / DESIGN_HEIGHT);
+            deviceBezel.style.transform = `scale(${scale})`;
+        }
+        scaleToFit();
+
         function resizeMapCanvas() {
             const rect = mapCanvas.parentElement.getBoundingClientRect();
             mapCanvas.width = rect.width;
@@ -512,7 +534,10 @@
             miniMapCanvas9.width = mini9Rect.width;
             miniMapCanvas9.height = mini9Rect.height;
         }
-        window.addEventListener('resize', resizeMapCanvas);
+        window.addEventListener('resize', () => {
+            scaleToFit();
+            resizeMapCanvas();
+        });
         resizeMapCanvas();
 
         function updateTrail(x, z) {
@@ -592,7 +617,12 @@
             if (typeof headingDeg === 'number') {
                 ctx.save();
                 ctx.translate(w / 2, h / 2);
-                ctx.rotate(headingDeg * Math.PI / 180);
+                // Heading 0 = facing world +Z (screen-down), 90 = facing world +X
+                // (screen-right) -- a counter-clockwise progression -- but
+                // ctx.rotate() turns clockwise for positive angles, and the
+                // triangle's unrotated tip points screen-up. (180 - heading)
+                // is the correct mapping (verified against both reference points).
+                ctx.rotate((180 - headingDeg) * Math.PI / 180);
                 ctx.fillStyle = '#367C2B';
                 ctx.strokeStyle = '#fff';
                 ctx.lineWidth = 1;
@@ -721,7 +751,9 @@
                 drawMap(payload.x, payload.z, payload.heading || 0);
                 coordReadout.textContent = `x: ${payload.x.toFixed(1)}  z: ${payload.z.toFixed(1)}`;
             }
-            hudTractor.style.transform = `translate(-50%, -50%) rotate(${payload.heading || 0}deg)`;
+            // Same (180 - heading) correction as the canvas tractor marker --
+            // see drawMapOn for the worked rotation-direction derivation.
+            hudTractor.style.transform = `translate(-50%, -50%) rotate(${180 - (payload.heading || 0)}deg)`;
         }, (fieldsPayload) => {
             fields = Array.isArray(fieldsPayload) ? fieldsPayload : [];
         });
