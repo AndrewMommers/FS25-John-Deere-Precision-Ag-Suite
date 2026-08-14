@@ -437,6 +437,12 @@ Real precision-ag ecosystems are not limited to one machine. They may involve co
 
 This is aligned with real-world machine connectivity and coordinated farm operations.
 
+### Scope note: G5 Terminal vs. a server-wide dashboard
+
+The G5 Terminal (`web/`) is scoped to a single operator's own machine only -- it reads telemetry for whichever vehicle the local player is controlling (gated by `getIsControlled()` in the Lua spec) and stays that way even when playing on someone else's server. It is not the place to build multi-player/server-wide visibility.
+
+A separate, later project -- a full server-wide dashboard (mobble.io-style: every player, vehicle, and field visible at once) -- would need a materially different data contract: a dedicated-server-side export looping over `g_currentMission.vehicleSystem.vehicles` / `userManager`, gated on `g_currentMission.connectedToDedicatedServer`, similar in shape to how `FS25_VG_Livemap` exports all-player state. Do not conflate the two; the G5 Terminal's single-operator export should not be extended into a multi-vehicle broadcast to serve this use case.
+
 ---
 
 ## 10. UI and Functional Layout
