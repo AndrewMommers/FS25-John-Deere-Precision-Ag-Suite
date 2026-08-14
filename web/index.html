@@ -182,17 +182,21 @@
         .mm9-page { background-color: #1a1a1a; padding: 4px; height: 100%; }
         .mm9-grid { display: grid; grid-template-columns: repeat(6, 1fr); grid-template-rows: 1fr 1.3fr; gap: 3px; height: 100%; }
         .mm9-tile { background-color: #efebda; border: 1px solid #b0aca0; display: flex; overflow: hidden; }
-        .mm9-split { flex-direction: row; }
-        .mm9-half { flex: 1; display: flex; flex-direction: column; padding: 4px 6px; border-right: 1px solid #d8d3c0; }
-        .mm9-half:last-child { border-right: none; }
-        .mm9-label { font-size: 8px; font-weight: 700; color: #444; text-transform: uppercase; line-height: 1.1; margin-bottom: 4px; }
-        .mm9-value-row { display: flex; align-items: baseline; gap: 3px; margin-top: auto; }
-        .mm9-value { font-size: 17px; font-weight: 700; color: #222; }
+        .mm9-split { flex-direction: column; }
+        .mm9-half { flex: 1; display: flex; flex-direction: column; padding: 4px 6px; border-bottom: 1px solid #d8d3c0; }
+        .mm9-half:last-child { border-bottom: none; }
+        /* Same header-bar treatment as .mm9-block-header (Transmission/Engine
+           Power), scaled to a half-cell -- spans the half's full width via
+           negative margins that cancel .mm9-half's own padding. */
+        .mm9-readings-header { background-color: #473e35; color: white; font-size: 10px; font-weight: bold; text-align: center; padding: 2px 0; margin: -4px -6px 4px; }
+        .mm9-label { font-size: 11px; font-weight: 700; color: #444; text-transform: uppercase; line-height: 1.15; margin-bottom: 4px; }
+        .mm9-value-row { display: flex; align-items: baseline; gap: 4px; margin-top: auto; }
+        .mm9-value { font-size: 23px; font-weight: 700; color: #222; }
         .mm9-value.mm9-real { color: #275623; }
-        .mm9-unit { font-size: 9px; color: #666; }
-        .mm9-icon { width: 14px; height: 14px; flex-shrink: 0; margin-bottom: 2px; }
-        .mm9-icon-lg { width: 22px; height: 22px; }
-        .mm9-badge { align-self: flex-start; background: #ccc7b4; color: #444; font-size: 7px; font-weight: 700; text-transform: uppercase; padding: 1px 4px; border-radius: 2px; margin-bottom: 2px; }
+        .mm9-unit { font-size: 12px; color: #666; }
+        .mm9-icon { width: 17px; height: 17px; flex-shrink: 0; margin-bottom: 2px; }
+        .mm9-icon-lg { width: 26px; height: 26px; }
+        .mm9-badge { align-self: flex-start; background: #ccc7b4; color: #444; font-size: 9px; font-weight: 700; text-transform: uppercase; padding: 1px 5px; border-radius: 2px; margin-bottom: 2px; }
 
         .mm9-map-tile { grid-row: span 1; padding: 0; position: relative; }
         .mm9-map-tile canvas { width: 100%; height: 100%; display: block; background-color: #3a4a2a; }
@@ -210,10 +214,10 @@
         .mm9-ct-yellow span { font-size: 6px; margin-left: 1px; font-weight: normal; }
 
         .mm9-block { flex-direction: column; padding: 4px 8px; }
-        .mm9-block-header { background-color: #473e35; color: white; font-size: 9px; font-weight: bold; text-align: center; padding: 2px 0; margin: -4px -8px 4px; }
-        .mm9-trans-row { display: flex; justify-content: space-between; font-size: 12px; font-weight: 700; padding: 1px 0; }
-        .mm9-trans-unit { justify-content: center; color: #666; font-weight: normal; font-size: 10px; }
-        .mm9-trans-mode { text-align: center; font-size: 11px; font-weight: 700; margin-top: 4px; color: #444; }
+        .mm9-block-header { background-color: #473e35; color: white; font-size: 12px; font-weight: bold; text-align: center; padding: 3px 0; margin: -4px -8px 4px; }
+        .mm9-trans-row { display: flex; justify-content: space-between; font-size: 15px; font-weight: 700; padding: 2px 0; }
+        .mm9-trans-unit { justify-content: center; color: #666; font-weight: normal; font-size: 13px; }
+        .mm9-trans-mode { text-align: center; font-size: 14px; font-weight: 700; margin-top: 4px; color: #444; }
         .mm9-power-gauge {
             height: 16px; background: #d8d3c0; border: 1px solid #999; margin-top: 4px;
             clip-path: polygon(0% 38%, 100% 0%, 100% 100%, 0% 62%);
@@ -254,6 +258,138 @@
         .menu-btn { background-color: #318220; color: white; }
         .menu-btn .tb-icon svg { fill: white; }
         .menu-btn .tb-indicator { background-color: #1d4d12; }
+
+        /* --- Menu overlay: a real full-screen page (title-bar stays visible
+           above it), not a small centered popup -- matches the real G5 Menu
+           screen, which replaces the header-bar/workspace/toolbar entirely
+           while open. Toggled via .device-bezel.menu-active (see JS). --- */
+        .menu-overlay { display: none; flex-direction: column; flex: 1; min-height: 0; }
+        .device-bezel.menu-active .menu-overlay { display: flex; }
+        .device-bezel.menu-active .header-bar,
+        .device-bezel.menu-active .workspace-container,
+        .device-bezel.menu-active .bottom-toolbar { display: none; }
+        .menu-panel {
+            flex: 1; min-height: 0; background: #efebda;
+            display: flex; flex-direction: column; overflow: hidden;
+        }
+        .menu-header {
+            background: #275623; color: white; display: flex; justify-content: space-between; align-items: center;
+            padding: 8px 18px; font-size: 20px; font-weight: 700; gap: 8px; flex-shrink: 0;
+        }
+        .menu-header-left { display: flex; align-items: center; gap: 8px; }
+        .menu-help-icon {
+            width: 20px; height: 20px; border-radius: 50%; border: 2px solid white;
+            display: flex; align-items: center; justify-content: center; font-size: 12px; font-weight: 700;
+        }
+        .menu-close {
+            background: #ffe100; color: #111; border: none; width: 36px; height: 36px; border-radius: 5px;
+            font-weight: 900; cursor: pointer; font-size: 16px;
+        }
+        .menu-body { flex: 1; min-height: 0; display: flex; }
+        .menu-sidebar { width: 210px; background: #3a3630; display: flex; flex-direction: column; flex-shrink: 0; }
+        .menu-sidebar-item {
+            padding: 18px 16px; color: #ddd; font-weight: 700; font-size: 14px; cursor: pointer;
+            border-bottom: 1px solid #4a453d; display: flex; justify-content: space-between; align-items: center;
+            position: relative;
+        }
+        .menu-sidebar-item.active { background: #ffe100; color: #111; font-size: 16px; padding: 22px 16px; }
+        .menu-sidebar-item.active::after {
+            content: ''; position: absolute; right: 0; bottom: 0; width: 18px; height: 18px;
+            background: linear-gradient(135deg, transparent 50%, rgba(0,0,0,0.22) 50%);
+        }
+        .menu-sidebar-item.menu-sidebar-disabled { color: #777; cursor: default; }
+        .menu-sidebar-chevron { font-size: 16px; opacity: 0.7; }
+        .menu-sidebar-item.active .menu-sidebar-chevron { display: none; }
+        .menu-content-panel { display: none; flex: 1; min-height: 0; overflow-y: auto; }
+        .menu-content-panel.active { display: grid; }
+        .menu-content { padding: 36px; grid-template-columns: repeat(5, 1fr); gap: 34px 24px; align-content: start; }
+        .menu-tile { display: flex; flex-direction: column; align-items: center; gap: 10px; cursor: pointer; }
+        .menu-tile-icon {
+            width: 76px; height: 76px; border: 2px solid #333; border-radius: 8px;
+            display: flex; align-items: center; justify-content: center; background: white;
+            border-bottom: 4px solid; border-image: linear-gradient(to right, #367c2b, #ffe100) 1;
+        }
+        .menu-tile-icon svg { width: 40px; height: 40px; }
+        .menu-tile-icon.tan { background: #cec7a0; border: none; border-image: none; border-radius: 12px; }
+        .menu-tile-label { font-size: 13px; font-weight: 700; color: #222; text-align: center; max-width: 110px; }
+
+        .submenu-overlay {
+            display: none; position: absolute; top: 0; left: 0; right: 0; bottom: 0;
+            background: rgba(0,0,0,0.35); align-items: center; justify-content: center; z-index: 2100;
+        }
+        .submenu-overlay.active { display: flex; }
+        .submenu-panel { width: 360px; background: #efebda; border-radius: 4px; box-shadow: 0 6px 24px rgba(0,0,0,0.5); overflow: hidden; }
+        .submenu-header {
+            background: #473e35; color: white; display: flex; justify-content: space-between; align-items: center;
+            padding: 8px 14px; font-size: 15px; font-weight: 700;
+        }
+        .submenu-content { padding: 20px; }
+        .option-row { display: flex; gap: 10px; }
+        .option-btn {
+            flex: 1; padding: 12px; text-align: center; font-weight: 700; font-size: 13px;
+            border: 1px solid #999; background: #fff; cursor: pointer; border-radius: 4px;
+        }
+        .option-btn.selected { background: #318220; color: white; border-color: #318220; }
+
+        /* --- Language & Units settings modal: matches the real G5 "Display"
+           settings screen (Cancel/Save, scrollable sectioned content, custom
+           scrollbar track) rather than the simpler option-row submenu used
+           by Time. --- */
+        .settings-modal {
+            width: 620px; height: 470px; background: white; padding: 8px; border-radius: 14px;
+            box-shadow: 0 14px 40px rgba(0,0,0,0.55);
+        }
+        .settings-modal-inner {
+            width: 100%; height: 100%; border-radius: 8px; overflow: hidden;
+            display: flex; flex-direction: column; background: #efebda;
+        }
+        .settings-modal-header {
+            background: #4b4a37; color: white; display: flex; align-items: center; gap: 10px;
+            padding: 12px 20px; font-size: 19px; font-weight: 700; flex-shrink: 0;
+        }
+        .settings-modal-body { flex: 1; min-height: 0; display: flex; }
+        .settings-sidebar { width: 150px; background: linear-gradient(to bottom, #4a4438, #1c1a16); display: flex; flex-direction: column; flex-shrink: 0; }
+        .settings-tab {
+            padding: 16px 14px; font-weight: 700; font-size: 14px; cursor: pointer; position: relative;
+            background: linear-gradient(to right, #f2efe3, #d8d3bd); color: #222;
+            display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid rgba(0,0,0,0.15);
+        }
+        .settings-tab.active { background: #ffe100; color: #111; }
+        .settings-tab.active::after {
+            content: ''; position: absolute; right: 0; bottom: 0; width: 14px; height: 14px;
+            background: linear-gradient(135deg, transparent 50%, rgba(0,0,0,0.22) 50%);
+        }
+        .settings-tab-disabled { cursor: default; }
+        .settings-content { flex: 1; min-width: 0; overflow-y: auto; padding: 14px 18px; scrollbar-width: none; }
+        .settings-content::-webkit-scrollbar { display: none; }
+        .settings-section-header { background: #d9d3b8; font-weight: 700; font-size: 13px; color: #222; padding: 6px 10px; margin: 14px 0 8px; border-radius: 2px; }
+        .settings-section-header:first-child { margin-top: 0; }
+        .settings-field-label { font-weight: 700; font-size: 12px; color: #333; margin-bottom: 4px; }
+        .settings-value-box {
+            background: white; border: 1.5px solid #999; border-radius: 6px; text-align: center;
+            font-weight: 700; font-size: 18px; color: #111; padding: 10px; margin-bottom: 12px; cursor: pointer;
+        }
+        .settings-value-box-disabled { color: #333; cursor: default; }
+        .settings-divider { height: 1px; background: #c9c2a8; margin: 4px 0 14px; }
+        .settings-swap-btn {
+            display: flex; align-items: center; justify-content: center; gap: 8px;
+            background: #cac4ad; color: #888; font-weight: 700; font-size: 13px;
+            border-radius: 6px; padding: 10px; margin-bottom: 14px; cursor: default;
+        }
+        .settings-swap-icon { font-size: 16px; }
+        .settings-scrollbar {
+            width: 30px; background: #2a271f; display: flex; flex-direction: column; align-items: center;
+            justify-content: space-between; flex-shrink: 0; padding: 4px 0;
+        }
+        .settings-scroll-btn { color: #d9d3b8; font-size: 11px; cursor: pointer; padding: 6px 0; }
+        .settings-scroll-track { flex: 1; width: 6px; background: #4a4438; border-radius: 3px; margin: 4px 0; }
+        .settings-modal-footer {
+            flex-shrink: 0; background: #d9d3b8; display: flex; justify-content: flex-end; gap: 12px;
+            padding: 10px 16px; border-top: 1px solid #b9b393;
+        }
+        .settings-btn { border: none; border-radius: 6px; padding: 10px 22px; font-weight: 700; font-size: 14px; cursor: pointer; display: flex; align-items: center; gap: 6px; }
+        .settings-btn-cancel { background: #efebda; color: #222; border: 1.5px solid #999; }
+        .settings-btn-save { background: #318220; color: white; }
     </style>
 </head>
 <body>
@@ -261,7 +397,7 @@
     <div class="device-bezel">
         <!-- Top Title Bar -->
         <div class="title-bar">
-            <span><span class="vehicle-badge" id="vehicle-badge">--</span>G5Plus CommandCenter&trade; Display</span>
+            <span><span class="vehicle-badge" id="vehicle-badge">--</span><span data-i18n="titleBarBrand">G5Plus CommandCenter&trade; Display</span></span>
             <span class="connection-status" id="ws-status">DISCONNECTED</span>
         </div>
 
@@ -322,14 +458,14 @@
 
                 <div class="sidebar">
                     <div class="sb-section" style="flex: 1;">
-                        <div class="sb-header">Guidance</div>
+                        <div class="sb-header" data-i18n="sbGuidance">Guidance</div>
                         <div class="sb-content">
                             <div class="sb-title" id="guidance-status">Guidance: Manual</div>
-                            <div class="sb-btn">Set Track</div>
+                            <div class="sb-btn" data-i18n="sbSetTrack">Set Track</div>
                             <div class="sb-value">50.299ft</div>
-                            <div class="sb-label">Track Spacing</div>
+                            <div class="sb-label" data-i18n="sbTrackSpacing">Track Spacing</div>
                         </div>
-                        <div class="sb-header sb-header-light">Shift Track</div>
+                        <div class="sb-header sb-header-light" data-i18n="sbShiftTrack">Shift Track</div>
                         <div class="sb-content">
                             <div class="sb-btn" style="padding: 2px;"><svg width="24" height="24" viewBox="0 0 24 24"><path d="M6 16h4v4h4v-4h4v-4h-4V8h-4v4H6v4zm-2-8v8h2v-8H4zm14 0v8h2v-8h-2z" fill="#111"/></svg></div>
                             <div class="shift-controls">
@@ -337,23 +473,23 @@
                                 <div class="sb-btn"><svg viewBox="0 0 24 24" width="16" height="16"><path d="M10 7l5 5-5 5V7z"/><path d="M17 6h2v12h-2z"/></svg></div>
                             </div>
                             <div class="sb-value" style="margin-top: 10px;">1.0 in</div>
-                            <div class="sb-label">Shift Increment</div>
+                            <div class="sb-label" data-i18n="sbShiftIncrement">Shift Increment</div>
                         </div>
                     </div>
                     <div class="sb-section" style="flex: 0.6;">
-                        <div class="sb-header">Machine</div>
+                        <div class="sb-header" data-i18n="sbMachine">Machine</div>
                         <div class="sb-content">
-                            <div class="sb-value" id="speed-value">0.0 <span style="font-size:11px;font-weight:normal;">km/h</span></div>
-                            <div class="sb-label">Speed</div>
+                            <div class="sb-value"><span id="speed-value">0.0</span> <span style="font-size:11px;font-weight:normal;" id="speed-unit">km/h</span></div>
+                            <div class="sb-label" data-i18n="sbSpeed">Speed</div>
                             <div class="sb-value" id="rpm-value" style="margin-top: 8px;">0</div>
-                            <div class="sb-label">Engine RPM</div>
+                            <div class="sb-label" data-i18n="sbEngineRpm">Engine RPM</div>
                         </div>
                     </div>
                     <div class="sb-section" style="flex: 0.4;">
-                        <div class="sb-header">Location</div>
+                        <div class="sb-header" data-i18n="sbLocation">Location</div>
                         <div class="sb-content">
                             <div class="sb-title">5 South</div>
-                            <div class="sb-label">Field</div>
+                            <div class="sb-label" data-i18n="sbField">Field</div>
                         </div>
                     </div>
                 </div>
@@ -371,12 +507,12 @@
                 <div class="mm9-page" id="mm-9r">
                     <div class="mm9-grid">
                         <div class="mm9-tile mm9-split">
-                            <div class="mm9-half"><svg class="mm9-icon" viewBox="0 0 24 24"><path d="M12 2C8 8 5 11 5 15a7 7 0 0014 0c0-4-3-7-7-13z" fill="none" stroke="#444" stroke-width="1.5"/></svg><div class="mm9-label">Readings<br>Counters A</div><div class="mm9-value-row"><span class="mm9-value" id="mm9-fuel-hr">--</span><span class="mm9-unit">gal/h</span></div></div>
+                            <div class="mm9-half"><div class="mm9-readings-header">Readings</div><svg class="mm9-icon" viewBox="0 0 24 24"><path d="M12 2C8 8 5 11 5 15a7 7 0 0014 0c0-4-3-7-7-13z" fill="none" stroke="#444" stroke-width="1.5"/></svg><div class="mm9-label">Counters A</div><div class="mm9-value-row"><span class="mm9-value" id="mm9-fuel-hr">--</span><span class="mm9-unit">gal/h</span></div></div>
                             <div class="mm9-half"><svg class="mm9-icon" viewBox="0 0 24 24"><path d="M12 2C8 8 5 11 5 15a7 7 0 0014 0c0-4-3-7-7-13z" fill="none" stroke="#444" stroke-width="1.5"/></svg><div class="mm9-label">Counters A</div><div class="mm9-value-row"><span class="mm9-value" id="mm9-fuel-ac">--</span><span class="mm9-unit">gal/ac</span></div></div>
                         </div>
                         <div class="mm9-tile mm9-split">
-                            <div class="mm9-half"><span class="mm9-badge">Idle</span><svg class="mm9-icon" viewBox="0 0 24 24"><path d="M6 2h12v4l-4 6 4 6v4H6v-4l4-6-4-6V2z" fill="none" stroke="#444" stroke-width="1.5"/></svg><div class="mm9-label">Readings<br>Machine</div><div class="mm9-value-row"><span class="mm9-value" id="mm9-idle">--</span><span class="mm9-unit">h</span></div></div>
-                            <div class="mm9-half"><svg class="mm9-icon" viewBox="0 0 24 24"><circle cx="6" cy="18" r="3" fill="none" stroke="#444" stroke-width="1.5"/><circle cx="17" cy="18" r="4" fill="none" stroke="#444" stroke-width="1.5"/><path d="M2 14h6l2-4h6l3 4h1" fill="none" stroke="#444" stroke-width="1.5"/></svg><div class="mm9-label">Machine</div><div class="mm9-value-row"><span class="mm9-value mm9-real" id="mm9-speed">0.00</span><span class="mm9-unit">mi/hr</span></div></div>
+                            <div class="mm9-half"><div class="mm9-readings-header">Readings</div><span class="mm9-badge">Idle</span><svg class="mm9-icon" viewBox="0 0 24 24"><path d="M6 2h12v4l-4 6 4 6v4H6v-4l4-6-4-6V2z" fill="none" stroke="#444" stroke-width="1.5"/></svg><div class="mm9-label">Machine</div><div class="mm9-value-row"><span class="mm9-value" id="mm9-idle">--</span><span class="mm9-unit">h</span></div></div>
+                            <div class="mm9-half"><svg class="mm9-icon" viewBox="0 0 24 24"><circle cx="6" cy="18" r="3" fill="none" stroke="#444" stroke-width="1.5"/><circle cx="17" cy="18" r="4" fill="none" stroke="#444" stroke-width="1.5"/><path d="M2 14h6l2-4h6l3 4h1" fill="none" stroke="#444" stroke-width="1.5"/></svg><div class="mm9-label">Machine</div><div class="mm9-value-row"><span class="mm9-value mm9-real" id="mm9-speed">0.00</span><span class="mm9-unit" id="mm9-speed-unit">mi/hr</span></div></div>
                         </div>
                         <div class="mm9-tile mm9-split">
                             <div class="mm9-half"><svg class="mm9-icon" viewBox="0 0 24 24"><rect x="10" y="3" width="4" height="12" rx="2" fill="none" stroke="#444" stroke-width="1.5"/><circle cx="12" cy="18" r="4" fill="none" stroke="#444" stroke-width="1.5"/></svg><div class="mm9-label">Machine</div><div class="mm9-value-row"><span class="mm9-value" id="mm9-coolant">--</span><span class="mm9-unit">&deg;F</span></div></div>
@@ -387,11 +523,11 @@
                             <div class="mm9-half"><svg class="mm9-icon" viewBox="0 0 24 24"><rect x="10" y="3" width="4" height="12" rx="2" fill="none" stroke="#444" stroke-width="1.5"/><circle cx="12" cy="18" r="4" fill="none" stroke="#444" stroke-width="1.5"/></svg><div class="mm9-label">Machine</div><div class="mm9-value-row"><span class="mm9-value" id="mm9-temp2">--</span><span class="mm9-unit">&deg;F</span></div></div>
                         </div>
                         <div class="mm9-tile mm9-split">
-                            <div class="mm9-half"><svg class="mm9-icon" viewBox="0 0 24 24"><rect x="3" y="3" width="18" height="18" fill="none" stroke="#444" stroke-width="1.5"/><path d="M7 17L17 7M8 9a1 1 0 100-2 1 1 0 000 2zm8 8a1 1 0 100-2 1 1 0 000 2z" stroke="#444" stroke-width="1.5" fill="none"/></svg><div class="mm9-label">Readings<br>Counters A</div><div class="mm9-value-row"><span class="mm9-value" id="mm9-area-rate">--</span><span class="mm9-unit">ac/h</span></div></div>
+                            <div class="mm9-half"><div class="mm9-readings-header">Readings</div><svg class="mm9-icon" viewBox="0 0 24 24"><rect x="3" y="3" width="18" height="18" fill="none" stroke="#444" stroke-width="1.5"/><path d="M7 17L17 7M8 9a1 1 0 100-2 1 1 0 000 2zm8 8a1 1 0 100-2 1 1 0 000 2z" stroke="#444" stroke-width="1.5" fill="none"/></svg><div class="mm9-label">Counters A</div><div class="mm9-value-row"><span class="mm9-value" id="mm9-area-rate">--</span><span class="mm9-unit">ac/h</span></div></div>
                             <div class="mm9-half"><svg class="mm9-icon" viewBox="0 0 24 24"><path d="M12 2C8 8 5 11 5 15a7 7 0 0014 0c0-4-3-7-7-13z" fill="#444"/></svg><div class="mm9-label">Machine</div><div class="mm9-value-row"><span class="mm9-value" id="mm9-oil1">--</span><span class="mm9-unit">psi</span></div></div>
                         </div>
                         <div class="mm9-tile mm9-split">
-                            <div class="mm9-half"><svg class="mm9-icon" viewBox="0 0 24 24"><rect x="3" y="3" width="18" height="18" fill="none" stroke="#444" stroke-width="1.5"/><path d="M7 17L17 7M8 9a1 1 0 100-2 1 1 0 000 2zm8 8a1 1 0 100-2 1 1 0 000 2z" stroke="#444" stroke-width="1.5" fill="none"/></svg><div class="mm9-label">Readings<br>Machine</div><div class="mm9-value-row"><span class="mm9-value" id="mm9-pct1">--</span><span class="mm9-unit">%</span></div></div>
+                            <div class="mm9-half"><div class="mm9-readings-header">Readings</div><svg class="mm9-icon" viewBox="0 0 24 24"><rect x="3" y="3" width="18" height="18" fill="none" stroke="#444" stroke-width="1.5"/><path d="M7 17L17 7M8 9a1 1 0 100-2 1 1 0 000 2zm8 8a1 1 0 100-2 1 1 0 000 2z" stroke="#444" stroke-width="1.5" fill="none"/></svg><div class="mm9-label">Machine</div><div class="mm9-value-row"><span class="mm9-value" id="mm9-pct1">--</span><span class="mm9-unit">%</span></div></div>
                             <div class="mm9-half"><svg class="mm9-icon" viewBox="0 0 24 24"><rect x="3" y="3" width="18" height="18" fill="none" stroke="#444" stroke-width="1.5"/><path d="M7 17L17 7M8 9a1 1 0 100-2 1 1 0 000 2zm8 8a1 1 0 100-2 1 1 0 000 2z" stroke="#444" stroke-width="1.5" fill="none"/></svg><div class="mm9-label">Counters A</div><div class="mm9-value-row"><span class="mm9-value" id="mm9-area">--</span><span class="mm9-unit">ac</span></div></div>
                         </div>
 
@@ -403,7 +539,7 @@
                             <canvas id="map-canvas-mini9"></canvas>
                         </div>
                         <div class="mm9-tile mm9-split">
-                            <div class="mm9-half"><svg class="mm9-icon" viewBox="0 0 24 24"><path d="M12 2C8 8 5 11 5 15a7 7 0 0014 0c0-4-3-7-7-13z" fill="none" stroke="#444" stroke-width="1.5"/></svg><div class="mm9-label">Readings<br>Counters A</div><div class="mm9-value-row"><span class="mm9-value" id="mm9-fuel-hr2">--</span><span class="mm9-unit">gal/h</span></div></div>
+                            <div class="mm9-half"><div class="mm9-readings-header">Readings</div><svg class="mm9-icon" viewBox="0 0 24 24"><path d="M12 2C8 8 5 11 5 15a7 7 0 0014 0c0-4-3-7-7-13z" fill="none" stroke="#444" stroke-width="1.5"/></svg><div class="mm9-label">Counters A</div><div class="mm9-value-row"><span class="mm9-value" id="mm9-fuel-hr2">--</span><span class="mm9-unit">gal/h</span></div></div>
                             <div class="mm9-half"><svg class="mm9-icon" viewBox="0 0 24 24"><path d="M12 2C8 8 5 11 5 15a7 7 0 0014 0c0-4-3-7-7-13z" fill="none" stroke="#444" stroke-width="1.5"/></svg><div class="mm9-label">Machine</div><div class="mm9-value-row"><span class="mm9-value" id="mm9-fuel-hr2b">--</span></div></div>
                         </div>
                         <div class="mm9-tile mm9-block">
@@ -424,7 +560,7 @@
                             <div class="mm9-value-row" style="justify-content:center;"><svg class="mm9-icon" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9" fill="none" stroke="#444" stroke-width="1.5"/><line x1="12" y1="12" x2="12" y2="5" stroke="#444" stroke-width="1.5"/></svg><span class="mm9-value" id="mm9-max-eng">--</span></div>
                         </div>
                         <div class="mm9-tile mm9-split">
-                            <div class="mm9-half"><svg class="mm9-icon" viewBox="0 0 24 24"><path d="M12 2C8 8 5 11 5 15a7 7 0 0014 0c0-4-3-7-7-13z" fill="none" stroke="#444" stroke-width="1.5"/></svg><div class="mm9-label">Readings<br>Counters A</div><div class="mm9-value-row"><span class="mm9-value" id="mm9-fuel-ac2">--</span><span class="mm9-unit">gal/ac</span></div></div>
+                            <div class="mm9-half"><div class="mm9-readings-header">Readings</div><svg class="mm9-icon" viewBox="0 0 24 24"><path d="M12 2C8 8 5 11 5 15a7 7 0 0014 0c0-4-3-7-7-13z" fill="none" stroke="#444" stroke-width="1.5"/></svg><div class="mm9-label">Counters A</div><div class="mm9-value-row"><span class="mm9-value" id="mm9-fuel-ac2">--</span><span class="mm9-unit">gal/ac</span></div></div>
                             <div class="mm9-half"><svg class="mm9-icon" viewBox="0 0 24 24"><path d="M12 2C8 8 5 11 5 15a7 7 0 0014 0c0-4-3-7-7-13z" fill="#444"/></svg><div class="mm9-label">Machine</div><div class="mm9-value-row"><span class="mm9-value" id="mm9-oil2">--</span><span class="mm9-unit">psi</span></div></div>
                         </div>
                         <div class="mm9-tile mm9-split">
@@ -445,19 +581,193 @@
 
         <!-- 4. Bottom Toolbar -->
         <div class="bottom-toolbar">
-            <div class="toolbar-btn"><div class="tb-icon"><svg viewBox="0 0 24 24"><path d="M4 6h16v2H4zm0 5h16v2H4zm0 5h16v2H4z"/><path d="M2.5 5.5L4 7l2.5-2.5L5 3 2.5 5.5zm0 5L4 12l2.5-2.5L5 8l-2.5 2.5zm0 5L4 17l2.5-2.5L5 13l-2.5 2.5z"/></svg></div><div class="tb-text">SETUP</div><div class="tb-indicator"></div></div>
-            <div class="toolbar-btn off"><div class="tb-icon"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="8" stroke="#111" stroke-width="2" fill="#d3d3d3"/><circle cx="12" cy="12" r="4" fill="#999"/></svg></div><div class="tb-text">WORK</div><div class="tb-off-label">OFF</div><div class="tb-indicator"></div></div>
-            <div class="toolbar-btn on"><div class="tb-icon"><svg viewBox="0 0 24 24"><path d="M3 20h18L16 4H8L3 20z" fill="#ccc" stroke="#111" stroke-width="1.5"/><path d="M8 4v16M12 4v16M16 4v16" stroke="#111" stroke-width="1.5"/></svg></div><div class="tb-text">SECTION CTL</div><div class="tb-on-label">ON</div><div class="tb-indicator"></div></div>
-            <div class="toolbar-btn"><div class="tb-icon"><svg viewBox="0 0 24 24"><path d="M3 20h18L16 4H8L3 20z" fill="#ccc" stroke="#111" stroke-width="1.5"/><path d="M8 4v16M12 4v16M16 4v16" stroke="#111" stroke-width="1.5"/></svg></div><div class="tb-text">SECTION CTL</div><div class="tb-indicator"></div></div>
-            <div class="toolbar-btn" id="autotrac-btn"><div class="tb-icon"><div class="autotrac-pie"></div></div><div class="tb-text">AUTOTRAC</div><div class="tb-indicator"></div></div>
-            <div class="toolbar-btn"><div class="tb-icon"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9" fill="none" stroke="#111" stroke-width="1.5"/><path d="M12 6v12M8 10l4-4 4 4" stroke="#111" stroke-width="1.5" fill="none"/></svg></div><div class="tb-text">GUIDANCE</div><div class="tb-indicator"></div></div>
-            <div class="toolbar-btn"><div class="tb-icon"><svg viewBox="0 0 24 24"><path d="M5 12h14M15 8l4 4-4 4M9 16l-4-4 4-4" stroke="#111" stroke-width="2" fill="none"/></svg></div><div class="tb-text">SWAP TRACK</div><div class="tb-indicator"></div></div>
-            <div class="toolbar-btn"><div class="tb-icon"><svg viewBox="0 0 24 24"><path d="M12 4v16M8 8v8M16 8v8" stroke="#111" stroke-width="2" stroke-dasharray="3,3" fill="none"/></svg></div><div class="tb-text">QUICK LINE</div><div class="tb-indicator"></div></div>
-            <div class="toolbar-btn"><div class="tb-icon" style="font-weight: 900; font-size: 16px; font-style: italic;">ISO</div><div class="tb-text">ISOBUS VT</div><div class="tb-indicator"></div></div>
-            <div class="toolbar-btn"><div class="tb-icon"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="4" fill="none" stroke="#111" stroke-width="2"/><path d="M12 2v3M12 19v3M2 12h3M19 12h3M5 5l2 2M17 17l2 2M19 5l-2 2M5 19l2-2" stroke="#111" stroke-width="2"/></svg></div><div class="tb-text">DISPLAY</div><div class="tb-indicator"></div></div>
-            <div class="toolbar-btn"><div class="tb-icon"><svg viewBox="0 0 24 24"><path d="M14.4 6L14 4H5v17h2v-7h5.6l.4 2h7V6z"/></svg></div><div class="tb-text">FLAGS</div><div class="tb-indicator"></div></div>
-            <div class="toolbar-btn"><div class="tb-icon" style="font-size: 22px; font-weight: bold;">?</div><div class="tb-text">HELP</div><div class="tb-indicator"></div></div>
-            <div class="toolbar-btn menu-btn"><div class="tb-icon"><svg viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/></svg></div><div class="tb-text">MENU</div><div class="tb-indicator"></div></div>
+            <div class="toolbar-btn"><div class="tb-icon"><svg viewBox="0 0 24 24"><path d="M4 6h16v2H4zm0 5h16v2H4zm0 5h16v2H4z"/><path d="M2.5 5.5L4 7l2.5-2.5L5 3 2.5 5.5zm0 5L4 12l2.5-2.5L5 8l-2.5 2.5zm0 5L4 17l2.5-2.5L5 13l-2.5 2.5z"/></svg></div><div class="tb-text" data-i18n="tbSetup">SETUP</div><div class="tb-indicator"></div></div>
+            <div class="toolbar-btn off"><div class="tb-icon"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="8" stroke="#111" stroke-width="2" fill="#d3d3d3"/><circle cx="12" cy="12" r="4" fill="#999"/></svg></div><div class="tb-text" data-i18n="tbWork">WORK</div><div class="tb-off-label">OFF</div><div class="tb-indicator"></div></div>
+            <div class="toolbar-btn on"><div class="tb-icon"><svg viewBox="0 0 24 24"><path d="M3 20h18L16 4H8L3 20z" fill="#ccc" stroke="#111" stroke-width="1.5"/><path d="M8 4v16M12 4v16M16 4v16" stroke="#111" stroke-width="1.5"/></svg></div><div class="tb-text" data-i18n="tbSectionCtl">SECTION CTL</div><div class="tb-on-label">ON</div><div class="tb-indicator"></div></div>
+            <div class="toolbar-btn"><div class="tb-icon"><svg viewBox="0 0 24 24"><path d="M3 20h18L16 4H8L3 20z" fill="#ccc" stroke="#111" stroke-width="1.5"/><path d="M8 4v16M12 4v16M16 4v16" stroke="#111" stroke-width="1.5"/></svg></div><div class="tb-text" data-i18n="tbSectionCtl">SECTION CTL</div><div class="tb-indicator"></div></div>
+            <div class="toolbar-btn" id="autotrac-btn"><div class="tb-icon"><div class="autotrac-pie"></div></div><div class="tb-text" data-i18n="tbAutotrac">AUTOTRAC</div><div class="tb-indicator"></div></div>
+            <div class="toolbar-btn"><div class="tb-icon"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9" fill="none" stroke="#111" stroke-width="1.5"/><path d="M12 6v12M8 10l4-4 4 4" stroke="#111" stroke-width="1.5" fill="none"/></svg></div><div class="tb-text" data-i18n="tbGuidance">GUIDANCE</div><div class="tb-indicator"></div></div>
+            <div class="toolbar-btn"><div class="tb-icon"><svg viewBox="0 0 24 24"><path d="M5 12h14M15 8l4 4-4 4M9 16l-4-4 4-4" stroke="#111" stroke-width="2" fill="none"/></svg></div><div class="tb-text" data-i18n="tbSwapTrack">SWAP TRACK</div><div class="tb-indicator"></div></div>
+            <div class="toolbar-btn"><div class="tb-icon"><svg viewBox="0 0 24 24"><path d="M12 4v16M8 8v8M16 8v8" stroke="#111" stroke-width="2" stroke-dasharray="3,3" fill="none"/></svg></div><div class="tb-text" data-i18n="tbQuickLine">QUICK LINE</div><div class="tb-indicator"></div></div>
+            <div class="toolbar-btn"><div class="tb-icon" style="font-weight: 900; font-size: 16px; font-style: italic;">ISO</div><div class="tb-text" data-i18n="tbIsobusVt">ISOBUS VT</div><div class="tb-indicator"></div></div>
+            <div class="toolbar-btn"><div class="tb-icon"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="4" fill="none" stroke="#111" stroke-width="2"/><path d="M12 2v3M12 19v3M2 12h3M19 12h3M5 5l2 2M17 17l2 2M19 5l-2 2M5 19l2-2" stroke="#111" stroke-width="2"/></svg></div><div class="tb-text" data-i18n="tbDisplay">DISPLAY</div><div class="tb-indicator"></div></div>
+            <div class="toolbar-btn"><div class="tb-icon"><svg viewBox="0 0 24 24"><path d="M14.4 6L14 4H5v17h2v-7h5.6l.4 2h7V6z"/></svg></div><div class="tb-text" data-i18n="tbFlags">FLAGS</div><div class="tb-indicator"></div></div>
+            <div class="toolbar-btn"><div class="tb-icon" style="font-size: 22px; font-weight: bold;">?</div><div class="tb-text" data-i18n="tbHelp">HELP</div><div class="tb-indicator"></div></div>
+            <div class="toolbar-btn menu-btn" id="menu-open-btn"><div class="tb-icon"><svg viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/></svg></div><div class="tb-text" data-i18n="tbMenu">MENU</div><div class="tb-indicator"></div></div>
+        </div>
+
+        <!-- Menu overlay: a real full-screen page matching the actual G5
+             Menu (title-bar stays visible above it, everything else swaps
+             out -- see .device-bezel.menu-active in the CSS).
+             "Machine Settings" tiles are shown for real (matches the
+             reference photo) but aren't wired to sub-screens yet -- Braking/
+             Engine/HVAC/Lights/SCV/Steering/Transmission/Maintenance each
+             need real FS25 Lua hooks we haven't verified, so opening them
+             would mean faking data. "System" (Language/Units/Time) is fully
+             interactive since it's pure client-side logic. "Applications"
+             has no reference yet and stays inert. -->
+        <div class="menu-overlay" id="menu-overlay">
+            <div class="menu-panel">
+                <div class="menu-header">
+                    <div class="menu-header-left">
+                        <span data-i18n="menuTitle">Menu</span>
+                        <span class="menu-help-icon">?</span>
+                    </div>
+                    <button type="button" class="menu-close" id="menu-close-btn">&#10005;</button>
+                </div>
+                <div class="menu-body">
+                    <div class="menu-sidebar">
+                        <div class="menu-sidebar-item active" id="menu-tab-machine" data-i18n="menuMachineSettings">Machine Settings</div>
+                        <div class="menu-sidebar-item menu-sidebar-disabled" data-i18n="menuApplications">Applications</div>
+                        <div class="menu-sidebar-item" id="menu-tab-system"><span data-i18n="menuSystem">System</span><span class="menu-sidebar-chevron">&#8250;</span></div>
+                    </div>
+
+                    <!-- Machine Settings tab -->
+                    <div class="menu-content-panel menu-content active" id="menu-panel-machine">
+                        <div class="menu-tile">
+                            <div class="menu-tile-icon"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9" fill="none" stroke="#111" stroke-width="1.5"/><circle cx="12" cy="12" r="3" fill="none" stroke="#111" stroke-width="1.5"/><path d="M12 3v6M12 15v6M3 12h6M15 12h6" stroke="#111" stroke-width="1.5"/></svg></div>
+                            <div class="menu-tile-label" data-i18n="menuBraking">Braking</div>
+                        </div>
+                        <div class="menu-tile">
+                            <div class="menu-tile-icon"><svg viewBox="0 0 24 24"><path d="M12 3c-3 4-5 6.5-5 10a5 5 0 0010 0c0-3.5-2-6-5-10z" fill="none" stroke="#111" stroke-width="1.5"/><path d="M9.5 15a2.5 2.5 0 002.5 2.5" stroke="#111" stroke-width="1.3" fill="none"/></svg></div>
+                            <div class="menu-tile-label" data-i18n="menuEngine">Engine</div>
+                        </div>
+                        <div class="menu-tile">
+                            <div class="menu-tile-icon"><svg viewBox="0 0 24 24"><path d="M12 2v3M12 19v3M4.2 4.2l2.1 2.1M17.7 17.7l2.1 2.1M2 12h3M19 12h3M4.2 19.8l2.1-2.1M17.7 6.3l2.1-2.1" stroke="#111" stroke-width="1.4"/><path d="M12 5v14M8 8l8 8M16 8l-8 8" stroke="#111" stroke-width="1.4"/><path d="M4 16c1.5-1 3-1 4.5 0M15.5 16c1.5-1 3-1 4.5 0" stroke="#111" stroke-width="1.2" fill="none"/></svg></div>
+                            <div class="menu-tile-label" data-i18n="menuHvac">HVAC</div>
+                        </div>
+                        <div class="menu-tile">
+                            <div class="menu-tile-icon"><svg viewBox="0 0 24 24"><path d="M6 4h12l-2 5H8L6 4z" fill="none" stroke="#111" stroke-width="1.5"/><path d="M9 9l-3 11M12 9v11M15 9l3 11" stroke="#111" stroke-width="1.5"/></svg></div>
+                            <div class="menu-tile-label" data-i18n="menuLights">Lights</div>
+                        </div>
+                        <div class="menu-tile">
+                            <div class="menu-tile-icon"><svg viewBox="0 0 24 24"><path d="M4 4h9v16H4z" fill="none" stroke="#111" stroke-width="1.5"/><path d="M13 4h7v16h-7" fill="none" stroke="#111" stroke-width="1.5"/><path d="M7 8h3M7 11h3M7 14h3" stroke="#111" stroke-width="1.2"/><path d="M17 15l1.6-1.6 3 3-1.6 1.6-3-3zM14.5 17.5l2-2" stroke="#111" stroke-width="1.3" fill="none"/></svg></div>
+                            <div class="menu-tile-label" data-i18n="menuMaintenance">Maintenance &amp; Calibrations</div>
+                        </div>
+                        <div class="menu-tile">
+                            <div class="menu-tile-icon"><svg viewBox="0 0 24 24"><rect x="10.5" y="3" width="3" height="8" rx="1" fill="none" stroke="#111" stroke-width="1.5"/><circle cx="12" cy="17" r="4" fill="none" stroke="#111" stroke-width="1.5"/><path d="M12 15v2l1.5 1" stroke="#111" stroke-width="1.3" fill="none"/></svg></div>
+                            <div class="menu-tile-label" data-i18n="menuScv">SCV</div>
+                        </div>
+                        <div class="menu-tile">
+                            <div class="menu-tile-icon"><svg viewBox="0 0 24 24"><path d="M12 3v9" stroke="#111" stroke-width="1.5"/><path d="M12 12l-6 9M12 12l6 9" fill="none" stroke="#111" stroke-width="1.5"/><circle cx="12" cy="3" r="2" fill="none" stroke="#111" stroke-width="1.5"/></svg></div>
+                            <div class="menu-tile-label" data-i18n="menuSteering">Steering</div>
+                        </div>
+                        <div class="menu-tile">
+                            <div class="menu-tile-icon"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="4" fill="none" stroke="#111" stroke-width="1.5"/><path d="M12 3v2.5M12 18.5V21M3 12h2.5M18.5 12H21M5.6 5.6l1.8 1.8M16.6 16.6l1.8 1.8M5.6 18.4l1.8-1.8M16.6 7.4l1.8-1.8" stroke="#111" stroke-width="1.5"/></svg></div>
+                            <div class="menu-tile-label" data-i18n="menuTransmission">Transmission</div>
+                        </div>
+                    </div>
+
+                    <!-- System tab. Only "Language & Units" and "Date & Time" are
+                         wired to real functionality (pure client-side). The rest
+                         (COM Port/Diagnostics/Display & Sound/File Manager/
+                         Software Manager/Users & Access/Wireless) mirror the
+                         real tile set for visual accuracy but need real FS25/OS
+                         hooks we don't have, so they're inert, same rationale
+                         as the Machine Settings tiles. -->
+                    <div class="menu-content-panel menu-content" id="menu-panel-system">
+                        <div class="menu-tile">
+                            <div class="menu-tile-icon tan"><svg viewBox="0 0 24 24"><path d="M4 8h16l-2 8H6L4 8z" fill="none" stroke="#111" stroke-width="1.5"/><circle cx="8" cy="11" r="0.8" fill="#111"/><circle cx="11" cy="11" r="0.8" fill="#111"/><circle cx="14" cy="11" r="0.8" fill="#111"/><circle cx="17" cy="11" r="0.8" fill="#111"/><circle cx="9.5" cy="14" r="0.8" fill="#111"/><circle cx="12.5" cy="14" r="0.8" fill="#111"/><circle cx="15.5" cy="14" r="0.8" fill="#111"/></svg></div>
+                            <div class="menu-tile-label" data-i18n="menuComPort">COM Port Settings</div>
+                        </div>
+                        <div class="menu-tile" id="menu-tile-time">
+                            <div class="menu-tile-icon tan"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9" fill="white" stroke="#111" stroke-width="1.5"/><path d="M12 12V7" stroke="#111" stroke-width="1.3"/><path d="M12 12l3 2" stroke="#e02020" stroke-width="1.3"/><circle cx="12" cy="12" r="1" fill="#111"/></svg></div>
+                            <div class="menu-tile-label" data-i18n="menuDateTime">Date &amp; Time</div>
+                        </div>
+                        <div class="menu-tile">
+                            <div class="menu-tile-icon tan"><svg viewBox="0 0 24 24"><path d="M14.7 6.3a4 4 0 00-5.4 5.4L4 17l3 3 5.3-5.3a4 4 0 005.4-5.4l-2.3 2.3-2-2 2.3-2.3z" fill="#111"/></svg></div>
+                            <div class="menu-tile-label" data-i18n="menuDiagnostics">Diagnostics Center</div>
+                        </div>
+                        <div class="menu-tile">
+                            <div class="menu-tile-icon tan"><svg viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="12" rx="1" fill="#3a7bd5" stroke="#111" stroke-width="1.3"/><path d="M8 20h8M12 16v4" stroke="#111" stroke-width="1.3"/><path d="M15 9c1 .8 1 3.2 0 4M17 7.5c2 1.6 2 6.4 0 8" stroke="white" stroke-width="1.1" fill="none"/></svg></div>
+                            <div class="menu-tile-label" data-i18n="menuDisplaySound">Display &amp; Sound</div>
+                        </div>
+                        <div class="menu-tile">
+                            <div class="menu-tile-icon tan"><svg viewBox="0 0 24 24"><path d="M3 6h6l2 2h10v10H3V6z" fill="#f0b429" stroke="#111" stroke-width="1.3"/></svg></div>
+                            <div class="menu-tile-label" data-i18n="menuFileManager">File Manager</div>
+                        </div>
+                        <div class="menu-tile" id="menu-tile-langunits">
+                            <div class="menu-tile-icon tan"><svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="7" fill="none" stroke="#111" stroke-width="1.3"/><ellipse cx="11" cy="11" rx="3" ry="7" fill="none" stroke="#111" stroke-width="1.1"/><path d="M4 11h14" stroke="#111" stroke-width="1.1"/><path d="M15 17l6 4" stroke="#367c2b" stroke-width="2.5" stroke-linecap="round"/></svg></div>
+                            <div class="menu-tile-label" data-i18n="menuLanguageUnits">Language &amp; Units</div>
+                        </div>
+                        <div class="menu-tile">
+                            <div class="menu-tile-icon tan"><svg viewBox="0 0 24 24"><path d="M4 9l8-4 8 4-8 4-8-4z" fill="none" stroke="#111" stroke-width="1.3"/><path d="M4 9v7l8 4 8-4V9" fill="none" stroke="#111" stroke-width="1.3"/><circle cx="12" cy="9" r="1.6" fill="#e02020"/></svg></div>
+                            <div class="menu-tile-label" data-i18n="menuSoftwareManager">Software Manager</div>
+                        </div>
+                        <div class="menu-tile">
+                            <div class="menu-tile-icon tan"><svg viewBox="0 0 24 24"><circle cx="12" cy="8" r="4" fill="#111"/><path d="M4 20c1.5-4.5 5-6 8-6s6.5 1.5 8 6" fill="#111"/></svg></div>
+                            <div class="menu-tile-label" data-i18n="menuUsersAccess">Users &amp; Access</div>
+                        </div>
+                        <div class="menu-tile">
+                            <div class="menu-tile-icon tan"><svg viewBox="0 0 24 24"><path d="M4 9a12 12 0 0116 0" fill="none" stroke="#111" stroke-width="1.6"/><path d="M7 12.5a7.5 7.5 0 0110 0" fill="none" stroke="#111" stroke-width="1.6"/><path d="M10 16a3.5 3.5 0 014 0" fill="none" stroke="#111" stroke-width="1.6"/><circle cx="12" cy="19" r="1.2" fill="#111"/></svg></div>
+                            <div class="menu-tile-label" data-i18n="menuWireless">Wireless Settings</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Language & Units sub-modal: matches the real G5 "Display" settings
+                 screen (Cancel/Save pattern, scrollable section list). Tapping the
+                 Active-language or Units boxes cycles a pending selection; nothing
+                 is actually applied until Save (Cancel discards it) -- see JS. -->
+            <div class="submenu-overlay" id="langunits-overlay">
+                <div class="settings-modal">
+                    <div class="settings-modal-inner">
+                        <div class="settings-modal-header">
+                            <span data-i18n="menuLanguageUnits">Language &amp; Units</span>
+                            <span class="menu-help-icon">?</span>
+                        </div>
+                        <div class="settings-modal-body">
+                            <div class="settings-sidebar">
+                                <div class="settings-tab active" data-i18n="settingsDisplay">Display</div>
+                                <div class="settings-tab settings-tab-disabled">
+                                    <span data-i18n="settingsIsobusVt">ISOBUS VT</span><span class="menu-sidebar-chevron">&#8250;</span>
+                                </div>
+                            </div>
+                            <div class="settings-content" id="langunits-content">
+                                <div class="settings-section-header" data-i18n="settingsLanguage">Language</div>
+                                <div class="settings-field-label" data-i18n="settingsActive">Active</div>
+                                <div class="settings-value-box" id="langunits-active-box">English</div>
+                                <div class="settings-field-label" data-i18n="settingsAlternate">Alternate</div>
+                                <div class="settings-value-box settings-value-box-disabled">---</div>
+                                <div class="settings-divider"></div>
+                                <div class="settings-swap-btn"><span class="settings-swap-icon">&#8635;</span><span data-i18n="settingsSwapLanguage">Swap Language</span></div>
+
+                                <div class="settings-section-header" data-i18n="settingsNumberFormat">Number Format</div>
+                                <div class="settings-value-box settings-value-box-disabled">1,234.55</div>
+
+                                <div class="settings-section-header" data-i18n="settingsUnitsOfMeasurement">Units of Measurement</div>
+                                <div class="settings-value-box" id="langunits-units-box">Metric</div>
+                            </div>
+                            <div class="settings-scrollbar">
+                                <div class="settings-scroll-btn" id="langunits-scroll-up">&#9650;</div>
+                                <div class="settings-scroll-track"></div>
+                                <div class="settings-scroll-btn" id="langunits-scroll-down">&#9660;</div>
+                            </div>
+                        </div>
+                        <div class="settings-modal-footer">
+                            <button type="button" class="settings-btn settings-btn-cancel" id="langunits-cancel-btn">&#10005; <span data-i18n="settingsCancel">Cancel</span></button>
+                            <button type="button" class="settings-btn settings-btn-save" id="langunits-save-btn">&#10003; <span data-i18n="settingsSave">Save</span></button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Time sub-modal -->
+            <div class="submenu-overlay" id="time-overlay">
+                <div class="submenu-panel">
+                    <div class="submenu-header">
+                        <span data-i18n="menuDateTime">Date &amp; Time</span>
+                        <button type="button" class="menu-close" id="time-close-btn">&#10005;</button>
+                    </div>
+                    <div class="submenu-content">
+                        <div class="option-row">
+                            <div class="option-btn" id="time-12h-btn" data-i18n="time12h">12-Hour</div>
+                            <div class="option-btn" id="time-24h-btn" data-i18n="time24h">24-Hour</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
         </div>
 
     </div>
@@ -465,10 +775,168 @@
     <!-- Shared bridge WebSocket client -->
     <script src="telemetry-client.js"></script>
     <script>
+        // --- Language & Units: pure client-side settings, no FS25 API involved ---
+        const TRANSLATIONS = {
+            en: {
+                pageTitleRunPage: 'Default Tractor Run Page', pageTitleGuidance: 'Guidance',
+                titleBarBrand: 'G5Plus CommandCenter™ Display',
+                tbSetup: 'SETUP', tbWork: 'WORK', tbSectionCtl: 'SECTION CTL', tbAutotrac: 'AUTOTRAC',
+                tbGuidance: 'GUIDANCE', tbSwapTrack: 'SWAP TRACK', tbQuickLine: 'QUICK LINE',
+                tbIsobusVt: 'ISOBUS VT', tbDisplay: 'DISPLAY', tbFlags: 'FLAGS', tbHelp: 'HELP', tbMenu: 'MENU',
+                sbGuidance: 'Guidance', sbShiftTrack: 'Shift Track', sbLocation: 'Location', sbMachine: 'Machine',
+                sbSetTrack: 'Set Track', sbTrackSpacing: 'Track Spacing', sbShiftIncrement: 'Shift Increment',
+                sbField: 'Field', sbSpeed: 'Speed', sbEngineRpm: 'Engine RPM',
+                menuTitle: 'Menu', menuMachineSettings: 'Machine Settings', menuApplications: 'Applications', menuSystem: 'System',
+                menuBraking: 'Braking', menuEngine: 'Engine', menuHvac: 'HVAC', menuLights: 'Lights',
+                menuMaintenance: 'Maintenance & Calibrations', menuScv: 'SCV', menuSteering: 'Steering', menuTransmission: 'Transmission',
+                menuComPort: 'COM Port Settings', menuDateTime: 'Date & Time', menuDiagnostics: 'Diagnostics Center',
+                menuDisplaySound: 'Display & Sound', menuFileManager: 'File Manager', menuLanguageUnits: 'Language & Units',
+                menuSoftwareManager: 'Software Manager', menuUsersAccess: 'Users & Access', menuWireless: 'Wireless Settings',
+                unitsTitle: 'Units', unitsImperial: 'Imperial', unitsMetric: 'Metric',
+                languageTitle: 'Language', timeTitle: 'Time', time12h: '12-Hour', time24h: '24-Hour',
+                settingsDisplay: 'Display', settingsIsobusVt: 'ISOBUS VT', settingsLanguage: 'Language',
+                settingsActive: 'Active', settingsAlternate: 'Alternate', settingsSwapLanguage: 'Swap Language',
+                settingsNumberFormat: 'Number Format', settingsUnitsOfMeasurement: 'Units of Measurement',
+                settingsCancel: 'Cancel', settingsSave: 'Save',
+            },
+            de: {
+                pageTitleRunPage: 'Standard-Traktor-Betriebsseite', pageTitleGuidance: 'Führung',
+                titleBarBrand: 'G5Plus CommandCenter™ Anzeige',
+                tbSetup: 'EINRICHTUNG', tbWork: 'ARBEIT', tbSectionCtl: 'TEILBREITE', tbAutotrac: 'AUTOTRAC',
+                tbGuidance: 'FÜHRUNG', tbSwapTrack: 'SPUR WECHSELN', tbQuickLine: 'SCHNELLLINIE',
+                tbIsobusVt: 'ISOBUS VT', tbDisplay: 'ANZEIGE', tbFlags: 'MARKIERUNGEN', tbHelp: 'HILFE', tbMenu: 'MENÜ',
+                sbGuidance: 'Führung', sbShiftTrack: 'Spur verschieben', sbLocation: 'Standort', sbMachine: 'Maschine',
+                sbSetTrack: 'Spur setzen', sbTrackSpacing: 'Spurabstand', sbShiftIncrement: 'Schrittweite',
+                sbField: 'Feld', sbSpeed: 'Geschwindigkeit', sbEngineRpm: 'Motordrehzahl',
+                menuTitle: 'Menü', menuMachineSettings: 'Maschineneinstellungen', menuApplications: 'Anwendungen', menuSystem: 'System',
+                menuBraking: 'Bremsen', menuEngine: 'Motor', menuHvac: 'Klimaanlage', menuLights: 'Beleuchtung',
+                menuMaintenance: 'Wartung & Kalibrierungen', menuScv: 'SCV', menuSteering: 'Lenkung', menuTransmission: 'Getriebe',
+                menuComPort: 'COM-Port-Einstellungen', menuDateTime: 'Datum & Uhrzeit', menuDiagnostics: 'Diagnosezentrum',
+                menuDisplaySound: 'Anzeige & Ton', menuFileManager: 'Dateimanager', menuLanguageUnits: 'Sprache & Einheiten',
+                menuSoftwareManager: 'Software-Manager', menuUsersAccess: 'Benutzer & Zugriff', menuWireless: 'WLAN-Einstellungen',
+                unitsTitle: 'Einheiten', unitsImperial: 'Imperial', unitsMetric: 'Metrisch',
+                languageTitle: 'Sprache', timeTitle: 'Uhrzeit', time12h: '12-Stunden', time24h: '24-Stunden',
+                settingsDisplay: 'Anzeige', settingsIsobusVt: 'ISOBUS VT', settingsLanguage: 'Sprache',
+                settingsActive: 'Aktiv', settingsAlternate: 'Alternativ', settingsSwapLanguage: 'Sprache tauschen',
+                settingsNumberFormat: 'Zahlenformat', settingsUnitsOfMeasurement: 'Maßeinheiten',
+                settingsCancel: 'Abbrechen', settingsSave: 'Speichern',
+            },
+        };
+        // NOTE: only en/tb*/sb*/menu* strings and the two page titles are covered --
+        // the dense mm9 grid (Readings/Counters A/Machine/etc, ~40 labels) isn't
+        // translated yet. Extending TRANSLATIONS + adding data-i18n to those tiles
+        // is the same mechanism, just more of it.
+
+        let currentLang = localStorage.getItem('tasdyn_lang') || 'en';
+        let currentUnits = localStorage.getItem('tasdyn_units') || 'metric';
+        let currentTimeFormat = localStorage.getItem('tasdyn_time_format') || '24h';
+
+        function t(key) {
+            return (TRANSLATIONS[currentLang] && TRANSLATIONS[currentLang][key]) || TRANSLATIONS.en[key] || key;
+        }
+
+        function applyLanguage(lang) {
+            currentLang = lang;
+            localStorage.setItem('tasdyn_lang', lang);
+            document.querySelectorAll('[data-i18n]').forEach((el) => {
+                el.textContent = t(el.getAttribute('data-i18n'));
+            });
+            document.getElementById('page-title').innerText = t(pageConfigs[currentPageIndex].titleKey);
+        }
+
+        function applyUnits(units) {
+            currentUnits = units;
+            localStorage.setItem('tasdyn_units', units);
+        }
+
+        function applyTimeFormat(format) {
+            currentTimeFormat = format;
+            localStorage.setItem('tasdyn_time_format', format);
+            document.getElementById('time-12h-btn').classList.toggle('selected', format === '12h');
+            document.getElementById('time-24h-btn').classList.toggle('selected', format === '24h');
+        }
+
+        // --- Menu overlay wiring ---
+        // The overlay replaces the header-bar/workspace/toolbar in place (see
+        // .device-bezel.menu-active in CSS), matching the real G5 Menu screen
+        // rather than floating as a small centered popup.
+        const menuDeviceBezel = document.querySelector('.device-bezel');
+        document.getElementById('menu-open-btn').addEventListener('click', () => {
+            showMenuTab('machine');
+            menuDeviceBezel.classList.add('menu-active');
+        });
+        document.getElementById('menu-close-btn').addEventListener('click', () => menuDeviceBezel.classList.remove('menu-active'));
+
+        function showMenuTab(tab) {
+            document.getElementById('menu-tab-machine').classList.toggle('active', tab === 'machine');
+            document.getElementById('menu-tab-system').classList.toggle('active', tab === 'system');
+            document.getElementById('menu-panel-machine').classList.toggle('active', tab === 'machine');
+            document.getElementById('menu-panel-system').classList.toggle('active', tab === 'system');
+        }
+        document.getElementById('menu-tab-machine').addEventListener('click', () => showMenuTab('machine'));
+        document.getElementById('menu-tab-system').addEventListener('click', () => showMenuTab('system'));
+
+        function wireSubmenu(tileId, overlayId, closeBtnId) {
+            const overlay = document.getElementById(overlayId);
+            document.getElementById(tileId).addEventListener('click', () => overlay.classList.add('active'));
+            document.getElementById(closeBtnId).addEventListener('click', () => overlay.classList.remove('active'));
+        }
+        wireSubmenu('menu-tile-time', 'time-overlay', 'time-close-btn');
+
+        document.getElementById('time-12h-btn').addEventListener('click', () => applyTimeFormat('12h'));
+        document.getElementById('time-24h-btn').addEventListener('click', () => applyTimeFormat('24h'));
+
+        // --- Language & Units modal: Cancel/Save pattern, matching the real
+        // G5 Display settings screen. Tapping a value box only edits a local
+        // pending selection; nothing is applied until Save (Cancel discards).
+        let pendingLang = currentLang;
+        let pendingUnits = currentUnits;
+        const langUnitsOverlay = document.getElementById('langunits-overlay');
+        const langUnitsActiveBox = document.getElementById('langunits-active-box');
+        const langUnitsUnitsBox = document.getElementById('langunits-units-box');
+        const langUnitsContent = document.getElementById('langunits-content');
+
+        function langUnitsLanguageLabel(lang) { return lang === 'de' ? 'Deutsch' : 'English'; }
+        function langUnitsUnitsLabel(units) { return units === 'imperial' ? t('unitsImperial') : t('unitsMetric'); }
+        function updateLangUnitsBoxes() {
+            langUnitsActiveBox.textContent = langUnitsLanguageLabel(pendingLang);
+            langUnitsUnitsBox.textContent = langUnitsUnitsLabel(pendingUnits);
+        }
+
+        document.getElementById('menu-tile-langunits').addEventListener('click', () => {
+            pendingLang = currentLang;
+            pendingUnits = currentUnits;
+            updateLangUnitsBoxes();
+            langUnitsOverlay.classList.add('active');
+        });
+        langUnitsActiveBox.addEventListener('click', () => {
+            pendingLang = pendingLang === 'en' ? 'de' : 'en';
+            updateLangUnitsBoxes();
+        });
+        langUnitsUnitsBox.addEventListener('click', () => {
+            pendingUnits = pendingUnits === 'imperial' ? 'metric' : 'imperial';
+            updateLangUnitsBoxes();
+        });
+        document.getElementById('langunits-cancel-btn').addEventListener('click', () => {
+            langUnitsOverlay.classList.remove('active');
+        });
+        document.getElementById('langunits-save-btn').addEventListener('click', () => {
+            applyLanguage(pendingLang);
+            applyUnits(pendingUnits);
+            langUnitsOverlay.classList.remove('active');
+        });
+        document.getElementById('langunits-scroll-up').addEventListener('click', () => {
+            langUnitsContent.scrollBy({ top: -80, behavior: 'smooth' });
+        });
+        document.getElementById('langunits-scroll-down').addEventListener('click', () => {
+            langUnitsContent.scrollBy({ top: 80, behavior: 'smooth' });
+        });
+        updateLangUnitsBoxes();
+
         // --- Page navigation (real toggle between Guidance and Machine Monitor pages) ---
         const pageConfigs = [
-            { id: 'page-cc', title: 'Default Tractor Run Page' },
-            { id: 'page-1', title: 'Guidance' }
+            { id: 'page-cc', titleKey: 'pageTitleRunPage' },
+            { id: 'page-1', titleKey: 'pageTitleGuidance' }
         ];
         let currentPageIndex = 0;
 
@@ -477,7 +945,7 @@
             if (index >= pageConfigs.length) index = 0;
 
             currentPageIndex = index;
-            document.getElementById('page-title').innerText = pageConfigs[currentPageIndex].title;
+            document.getElementById('page-title').innerText = t(pageConfigs[currentPageIndex].titleKey);
 
             document.querySelectorAll('.workspace').forEach(el => el.classList.remove('active'));
             document.getElementById(pageConfigs[currentPageIndex].id).classList.add('active');
@@ -648,7 +1116,9 @@
         }
 
         const MAX_TRACKING_INCHES = 36;
+        const MAX_TRACKING_CM = 91.44;
         const METERS_TO_INCHES = 39.3701;
+        const METERS_TO_CM = 100;
 
         const xtrackIndicator = document.querySelector('.ct-red-box');
         const xtrackVal = document.querySelector('.ct-yellow-box');
@@ -677,19 +1147,27 @@
             return COMPASS_POINTS[Math.round(headingDeg / 45) % 8];
         }
 
-        function updateCrossTrackError(errorInches) {
-            xtrackVal.innerHTML = `${Math.abs(errorInches).toFixed(1)}<span>in</span>`;
-            const clampedError = Math.max(-MAX_TRACKING_INCHES, Math.min(MAX_TRACKING_INCHES, errorInches));
-            const percentageOffset = (clampedError / MAX_TRACKING_INCHES) * 50;
+        function updateCrossTrackError(errorMeters) {
+            const isImperial = currentUnits === 'imperial';
+            const maxRange = isImperial ? MAX_TRACKING_INCHES : MAX_TRACKING_CM;
+            const errorDisplay = errorMeters * (isImperial ? METERS_TO_INCHES : METERS_TO_CM);
+            const unitLabel = isImperial ? 'in' : 'cm';
+            xtrackVal.innerHTML = `${Math.abs(errorDisplay).toFixed(1)}<span>${unitLabel}</span>`;
+            const clampedError = Math.max(-maxRange, Math.min(maxRange, errorDisplay));
+            const percentageOffset = (clampedError / maxRange) * 50;
             xtrackIndicator.style.left = `calc(50% - 12.5px + ${percentageOffset}%)`;
         }
 
         const mm9CtRed = document.getElementById('mm9-ct-red');
         const mm9CtYellow = document.getElementById('mm9-ct-yellow');
-        function updateMiniCrossTrackError(errorInches) {
-            mm9CtYellow.innerHTML = `${Math.abs(errorInches).toFixed(0)}<span>in</span>`;
-            const clampedError = Math.max(-MAX_TRACKING_INCHES, Math.min(MAX_TRACKING_INCHES, errorInches));
-            const percentageOffset = (clampedError / MAX_TRACKING_INCHES) * 50;
+        function updateMiniCrossTrackError(errorMeters) {
+            const isImperial = currentUnits === 'imperial';
+            const maxRange = isImperial ? MAX_TRACKING_INCHES : MAX_TRACKING_CM;
+            const errorDisplay = errorMeters * (isImperial ? METERS_TO_INCHES : METERS_TO_CM);
+            const unitLabel = isImperial ? 'in' : 'cm';
+            mm9CtYellow.innerHTML = `${Math.abs(errorDisplay).toFixed(0)}<span>${unitLabel}</span>`;
+            const clampedError = Math.max(-maxRange, Math.min(maxRange, errorDisplay));
+            const percentageOffset = (clampedError / maxRange) * 50;
             mm9CtRed.style.left = `calc(50% - 5px + ${percentageOffset}%)`;
         }
 
@@ -713,20 +1191,31 @@
             TasDynTelemetry.sendCommand('TOGGLE_AUTOTRAC', nowActive);
         });
 
+        function formatSpeed(speedKph) {
+            if (currentUnits === 'imperial') {
+                return { value: (speedKph * KPH_TO_MPH).toFixed(2), unit: 'mi/hr' };
+            }
+            return { value: speedKph.toFixed(2), unit: 'km/h' };
+        }
+
         TasDynTelemetry.connect((payload) => {
-            updateCrossTrackError((payload.crossTrackError || 0) * METERS_TO_INCHES);
-            updateMiniCrossTrackError((payload.crossTrackError || 0) * METERS_TO_INCHES);
+            updateCrossTrackError(payload.crossTrackError || 0);
+            updateMiniCrossTrackError(payload.crossTrackError || 0);
             headingValueEl.innerHTML = `${compassLabel(payload.heading || 0)} ${Math.round(payload.heading || 0)}&deg;`;
             guidanceStatusEl.textContent = payload.guidanceActive
                 ? `Guidance: ${payload.guidanceMode} (Active)`
                 : 'Guidance: Manual';
             updateAutotracButton(!!payload.guidanceActive);
-            speedValueEl.innerHTML = `${(payload.speed || 0).toFixed(1)} <span style="font-size:11px;font-weight:normal;">km/h</span>`;
+            const sidebarSpeed = formatSpeed(payload.speed || 0);
+            speedValueEl.textContent = sidebarSpeed.value;
+            document.getElementById('speed-unit').textContent = sidebarSpeed.unit;
             rpmValueEl.textContent = Math.round(payload.rpm || 0);
 
             vehicleBadgeEl.textContent = payload.vehicleName || '--';
 
-            mm9SpeedEl.textContent = ((payload.speed || 0) * KPH_TO_MPH).toFixed(2);
+            const mm9Speed = formatSpeed(payload.speed || 0);
+            mm9SpeedEl.textContent = mm9Speed.value;
+            document.getElementById('mm9-speed-unit').textContent = mm9Speed.unit;
 
             // Two mutually-exclusive states: Default Tractor Run Page for any
             // recognized John Deere tractor series, or the fallback message.
@@ -758,6 +1247,9 @@
             fields = Array.isArray(fieldsPayload) ? fieldsPayload : [];
         });
 
+        applyLanguage(currentLang);
+        applyUnits(currentUnits);
+        applyTimeFormat(currentTimeFormat);
         goToPage(0);
     </script>
 </body>
