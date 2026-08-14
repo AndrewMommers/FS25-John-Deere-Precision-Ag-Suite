@@ -161,6 +161,9 @@ function TasDynPrecisionAg:tasDynExportTelemetry()
     local speedKph = self:getLastSpeed() or 0
     local engineRpm = self:getMotorRpmReal() or 0
 
+    local worldX, _, worldZ = getWorldTranslation(self.rootNode)
+    local terrainSize = g_currentMission.terrainSize or 2048
+
     local dx, _, dz = localDirectionToWorld(self.rootNode, 0, 0, 1)
     local heading = math.deg(math.atan2(dx, dz))
     if heading < 0 then heading = heading + 360 end
@@ -184,7 +187,7 @@ function TasDynPrecisionAg:tasDynExportTelemetry()
     end
 
     local json = string.format(
-        '{"speed":%.2f,"rpm":%.1f,"heading":%.2f,"implementLowered":%s,"implementWidth":%.2f,"crossTrackError":%.3f,"guidanceActive":%s,"guidanceMode":"%s","steeringCorrection":%.3f}',
+        '{"speed":%.2f,"rpm":%.1f,"heading":%.2f,"implementLowered":%s,"implementWidth":%.2f,"crossTrackError":%.3f,"guidanceActive":%s,"guidanceMode":"%s","steeringCorrection":%.3f,"x":%.2f,"z":%.2f,"terrainSize":%.1f}',
         speedKph,
         engineRpm,
         heading,
@@ -193,7 +196,10 @@ function TasDynPrecisionAg:tasDynExportTelemetry()
         spec.crossTrackError,
         tostring(spec.guidanceActive),
         spec.guidanceMode,
-        spec.steeringCorrection
+        spec.steeringCorrection,
+        worldX or 0,
+        worldZ or 0,
+        terrainSize
     )
 
     -- FS25's Lua sandbox only allows write-mode io.open, so this overwrites
