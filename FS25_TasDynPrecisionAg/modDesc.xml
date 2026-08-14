@@ -19,5 +19,6 @@
     <!-- Registers tasDynPrecisionAg and attaches it to every compatible vehicle type (vanilla and modded) at startup -->
     <extraSourceFiles>
         <sourceFile filename="scripts/RegisterTasDynSpecialization.lua" />
+        <sourceFile filename="scripts/TasDynFieldExport.lua" />
     </extraSourceFiles>
 </modDesc>

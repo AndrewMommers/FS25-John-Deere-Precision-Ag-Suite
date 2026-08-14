@@ -1,9 +1,11 @@
 // Shared WebSocket client for TasDyn G5 web terminal pages.
 //
 // Include via <script src="telemetry-client.js"></script>, then call
-// TasDynTelemetry.connect(onTelemetry) with a callback that receives each
-// live payload. Automatically updates #ws-status and #clock if those
-// elements exist on the page, and handles reconnect with backoff.
+// TasDynTelemetry.connect(onTelemetry, onFields) with callbacks for each
+// live telemetry payload and for field boundary updates (fields arrive
+// rarely -- once per session, since field geometry is static per map).
+// Automatically updates #ws-status and #clock if those elements exist on
+// the page, and handles reconnect with backoff.
 
 const TasDynTelemetry = (() => {
     const BRIDGE_URL = `ws://${location.hostname || "localhost"}:8787`;
@@ -11,6 +13,7 @@ const TasDynTelemetry = (() => {
     let socket = null;
     let reconnectDelay = 1000;
     let onTelemetryCallback = null;
+    let onFieldsCallback = null;
 
     function updateClock() {
         const clockEl = document.getElementById("clock");
@@ -45,6 +48,8 @@ const TasDynTelemetry = (() => {
             }
             if (message.type === "telemetry" && onTelemetryCallback) {
                 onTelemetryCallback(message.payload);
+            } else if (message.type === "fields" && onFieldsCallback) {
+                onFieldsCallback(message.payload);
             }
         });
 
@@ -58,8 +63,9 @@ const TasDynTelemetry = (() => {
         reconnectDelay = Math.min(reconnectDelay * 2, 10000);
     }
 
-    function connect(onTelemetry) {
+    function connect(onTelemetry, onFields) {
         onTelemetryCallback = onTelemetry;
+        onFieldsCallback = onFields || null;
         updateClock();
         setInterval(updateClock, 1000);
         connectSocket();

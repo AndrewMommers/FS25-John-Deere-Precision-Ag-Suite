@@ -190,8 +190,20 @@
         .mm9-icon-lg { width: 22px; height: 22px; }
         .mm9-badge { align-self: flex-start; background: #ccc7b4; color: #444; font-size: 7px; font-weight: 700; text-transform: uppercase; padding: 1px 4px; border-radius: 2px; margin-bottom: 2px; }
 
-        .mm9-map-tile { grid-row: span 1; padding: 0; }
+        .mm9-map-tile { grid-row: span 1; padding: 0; position: relative; }
         .mm9-map-tile canvas { width: 100%; height: 100%; display: block; background-color: #3a4a2a; }
+        .mm9-ct-container {
+            position: absolute; top: 0; left: 0; right: 0; height: 14px; z-index: 2;
+            background-color: rgba(255,255,255,0.95); display: flex; border-bottom: 1px solid #999;
+        }
+        .mm9-ct-ticks { flex: 1; position: relative; }
+        .mm9-ct-red { position: absolute; background-color: #c41212; width: 10px; height: 100%; left: calc(50% - 5px); transition: left 0.1s linear; }
+        .mm9-ct-yellow {
+            position: absolute; background-color: #ffe100; color: black; font-weight: bold; font-size: 8px;
+            height: 100%; width: 24px; left: 50%; transform: translateX(-50%);
+            display: flex; align-items: center; justify-content: center; z-index: 1;
+        }
+        .mm9-ct-yellow span { font-size: 6px; margin-left: 1px; font-weight: normal; }
 
         .mm9-block { flex-direction: column; padding: 4px 8px; }
         .mm9-block-header { background-color: #473e35; color: white; font-size: 9px; font-weight: bold; text-align: center; padding: 2px 0; margin: -4px -8px 4px; }
@@ -377,6 +389,10 @@
                         </div>
 
                         <div class="mm9-tile mm9-map-tile">
+                            <div class="mm9-ct-container">
+                                <div class="mm9-ct-ticks"><div class="mm9-ct-red" id="mm9-ct-red"></div></div>
+                                <div class="mm9-ct-yellow" id="mm9-ct-yellow">0<span>in</span></div>
+                            </div>
                             <canvas id="map-canvas-mini9"></canvas>
                         </div>
                         <div class="mm9-tile mm9-split">
@@ -487,6 +503,7 @@
 
         let trail = [];
         let lastTrailPoint = null;
+        let fields = []; // real field boundary polygons, [{ id, points: [[x,z], ...] }]
 
         function resizeMapCanvas() {
             const rect = mapCanvas.parentElement.getBoundingClientRect();
@@ -508,7 +525,7 @@
             }
         }
 
-        function drawMapOn(canvas, ctx, worldX, worldZ, metersVisible) {
+        function drawMapOn(canvas, ctx, worldX, worldZ, metersVisible, headingDeg) {
             const w = canvas.width;
             const h = canvas.height;
             const pxPerMeter = w / metersVisible;
@@ -536,6 +553,24 @@
                 ctx.stroke();
             }
 
+            // Real field boundaries, exported once by the mod from
+            // g_fieldManager.fields[i].densityMapPolygon (see TasDynFieldExport.lua)
+            if (fields.length > 0) {
+                ctx.strokeStyle = 'rgba(255,255,255,0.6)';
+                ctx.lineWidth = 1.5;
+                fields.forEach((field) => {
+                    if (!field.points || field.points.length < 2) return;
+                    ctx.beginPath();
+                    field.points.forEach((p, i) => {
+                        const cx = w / 2 + (p[0] - worldX) * pxPerMeter;
+                        const cy = h / 2 + (p[1] - worldZ) * pxPerMeter;
+                        if (i === 0) ctx.moveTo(cx, cy); else ctx.lineTo(cx, cy);
+                    });
+                    ctx.closePath();
+                    ctx.stroke();
+                });
+            }
+
             if (trail.length > 1) {
                 ctx.strokeStyle = '#ffe100';
                 ctx.lineWidth = 2;
@@ -548,16 +583,36 @@
                 ctx.stroke();
             }
 
-            // Vehicle marker
-            ctx.fillStyle = '#ffde00';
-            ctx.beginPath();
-            ctx.arc(w / 2, h / 2, 3, 0, Math.PI * 2);
-            ctx.fill();
+            // Vehicle marker: a small tractor-shaped triangle pointing in the
+            // direction of travel. Only drawn when a heading is passed in --
+            // the main guidance map already has its own DOM .hud-tractor
+            // overlay, so this only applies to the Machine Monitor mini-map.
+            if (typeof headingDeg === 'number') {
+                ctx.save();
+                ctx.translate(w / 2, h / 2);
+                ctx.rotate(headingDeg * Math.PI / 180);
+                ctx.fillStyle = '#367C2B';
+                ctx.strokeStyle = '#fff';
+                ctx.lineWidth = 1;
+                ctx.beginPath();
+                ctx.moveTo(0, -7);
+                ctx.lineTo(5, 6);
+                ctx.lineTo(-5, 6);
+                ctx.closePath();
+                ctx.fill();
+                ctx.stroke();
+                ctx.restore();
+            } else {
+                ctx.fillStyle = '#ffde00';
+                ctx.beginPath();
+                ctx.arc(w / 2, h / 2, 3, 0, Math.PI * 2);
+                ctx.fill();
+            }
         }
 
-        function drawMap(worldX, worldZ) {
+        function drawMap(worldX, worldZ, headingDeg) {
             drawMapOn(mapCanvas, mapCtx, worldX, worldZ, METERS_VISIBLE);
-            drawMapOn(miniMapCanvas9, miniMapCtx9, worldX, worldZ, METERS_VISIBLE_MINI);
+            drawMapOn(miniMapCanvas9, miniMapCtx9, worldX, worldZ, METERS_VISIBLE_MINI, headingDeg);
         }
 
         const MAX_TRACKING_INCHES = 36;
@@ -597,6 +652,15 @@
             xtrackIndicator.style.left = `calc(50% - 12.5px + ${percentageOffset}%)`;
         }
 
+        const mm9CtRed = document.getElementById('mm9-ct-red');
+        const mm9CtYellow = document.getElementById('mm9-ct-yellow');
+        function updateMiniCrossTrackError(errorInches) {
+            mm9CtYellow.innerHTML = `${Math.abs(errorInches).toFixed(0)}<span>in</span>`;
+            const clampedError = Math.max(-MAX_TRACKING_INCHES, Math.min(MAX_TRACKING_INCHES, errorInches));
+            const percentageOffset = (clampedError / MAX_TRACKING_INCHES) * 50;
+            mm9CtRed.style.left = `calc(50% - 5px + ${percentageOffset}%)`;
+        }
+
         // AutoTrac's ON/OFF state is a real DOM element (.tb-on-label/.tb-off-label),
         // not just a CSS class, so it has to be inserted/removed, not toggled.
         function updateAutotracButton(active) {
@@ -619,6 +683,7 @@
 
         TasDynTelemetry.connect((payload) => {
             updateCrossTrackError((payload.crossTrackError || 0) * METERS_TO_INCHES);
+            updateMiniCrossTrackError((payload.crossTrackError || 0) * METERS_TO_INCHES);
             headingValueEl.innerHTML = `${compassLabel(payload.heading || 0)} ${Math.round(payload.heading || 0)}&deg;`;
             guidanceStatusEl.textContent = payload.guidanceActive
                 ? `Guidance: ${payload.guidanceMode} (Active)`
@@ -651,10 +716,12 @@
 
             if (typeof payload.x === 'number' && typeof payload.z === 'number') {
                 updateTrail(payload.x, payload.z);
-                drawMap(payload.x, payload.z);
+                drawMap(payload.x, payload.z, payload.heading || 0);
                 coordReadout.textContent = `x: ${payload.x.toFixed(1)}  z: ${payload.z.toFixed(1)}`;
             }
             hudTractor.style.transform = `translate(-50%, -50%) rotate(${payload.heading || 0}deg)`;
+        }, (fieldsPayload) => {
+            fields = Array.isArray(fieldsPayload) ? fieldsPayload : [];
         });
 
         goToPage(0);

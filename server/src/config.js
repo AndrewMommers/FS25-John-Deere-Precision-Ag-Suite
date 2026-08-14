@@ -11,6 +11,7 @@ const bridgeDir = path.join(profileDir, "modSettings", "TasmanDynamics");
 module.exports = {
   bridgeDir,
   telemetryFile: path.join(bridgeDir, "telemetry.json"),
+  fieldsFile: path.join(bridgeDir, "fields.json"),
   commandsFile: path.join(bridgeDir, "commands.xml"),
   httpPort: Number(process.env.PORT) || 8787,
 };

@@ -5,6 +5,7 @@ const config = require("./config");
 
 let lastTelemetryRaw = null;
 let telemetryMessageCount = 0;
+let lastFieldsRaw = null;
 let commandSeq = 0;
 
 function escapeXmlAttr(value) {
@@ -52,6 +53,27 @@ function readTelemetry() {
   });
 }
 
+// Field boundaries are static per map (only written once at mission start by
+// the mod), so this is watched at a much lower frequency than telemetry.
+function readFields() {
+  fs.readFile(config.fieldsFile, "utf8", (err, raw) => {
+    if (err) return; // file not written yet, or game not running
+    if (raw === lastFieldsRaw) return;
+
+    let payload;
+    try {
+      payload = JSON.parse(raw);
+    } catch (parseErr) {
+      console.warn("[bridge] Discarded malformed fields payload:", parseErr.message);
+      return;
+    }
+
+    lastFieldsRaw = raw;
+    console.log(`[bridge] Loaded ${payload.length} field boundaries`);
+    broadcast({ type: "fields", payload });
+  });
+}
+
 function sendCommandToGame(command) {
   commandSeq += 1;
   const xml = buildCommandXml(commandSeq, command);
@@ -89,6 +111,9 @@ wss.on("connection", (ws) => {
   if (lastTelemetryRaw) {
     ws.send(JSON.stringify({ type: "telemetry", timestamp: Date.now(), payload: JSON.parse(lastTelemetryRaw) }));
   }
+  if (lastFieldsRaw) {
+    ws.send(JSON.stringify({ type: "fields", payload: JSON.parse(lastFieldsRaw) }));
+  }
 
   ws.on("message", (data) => {
     let message;
@@ -114,6 +139,9 @@ fs.mkdir(config.bridgeDir, { recursive: true }, (err) => {
 
 fs.watchFile(config.telemetryFile, { interval: 100 }, readTelemetry);
 readTelemetry();
+
+fs.watchFile(config.fieldsFile, { interval: 2000 }, readFields);
+readFields();
 
 server.listen(config.httpPort, () => {
   console.log(`[bridge] Listening on http://localhost:${config.httpPort}`);
