@@ -390,6 +390,46 @@
         .settings-btn { border: none; border-radius: 6px; padding: 10px 22px; font-weight: 700; font-size: 14px; cursor: pointer; display: flex; align-items: center; gap: 6px; }
         .settings-btn-cancel { background: #efebda; color: #222; border: 1.5px solid #999; }
         .settings-btn-save { background: #318220; color: white; }
+
+        /* --- Nested "Active" language picker (stacks on top of the Language
+           & Units modal, higher z-index so it paints above it). --- */
+        #langpicker-overlay { z-index: 2200; }
+        .picker-modal {
+            width: 480px; height: 420px; background: white; padding: 8px; border-radius: 14px;
+            box-shadow: 0 14px 40px rgba(0,0,0,0.55); display: flex; flex-direction: column;
+        }
+        .picker-modal-header { font-size: 20px; font-weight: 700; color: #111; padding: 14px 18px 10px; flex-shrink: 0; }
+        .picker-modal-body { flex: 1; min-height: 0; display: flex; background: #efebda; border-radius: 6px; overflow: hidden; }
+        .picker-list { flex: 1; min-width: 0; overflow-y: auto; scrollbar-width: none; background: #57503f; }
+        .picker-list::-webkit-scrollbar { display: none; }
+        .picker-item {
+            padding: 16px 20px; font-weight: 700; font-size: 16px; color: #222; cursor: pointer;
+            background: #ded9c3; border-bottom: 1px solid #c4bfa6; border-left: 6px solid transparent;
+        }
+        .picker-item:nth-child(even) { background: #d8d3bd; }
+        .picker-item.active { background: #ffe100; border-left-color: #111; color: #111; }
+        .picker-modal-header { display: flex; align-items: center; gap: 8px; }
+        .help-icon-dark { border-color: #444; color: #444; }
+
+        /* --- Select Units of Measure: wider modal, two-pane body (Preview
+           table + system list) instead of a single option list. --- */
+        .units-picker-modal { width: 740px; height: 545px; }
+        .units-picker-body { flex-direction: row; }
+        .units-preview-pane { flex: 1; min-width: 0; display: flex; flex-direction: column; background: #efebda; }
+        .units-preview-header {
+            display: flex; justify-content: space-between; background: #d9d3b8; font-weight: 700;
+            font-size: 13px; color: #222; padding: 8px 14px; flex-shrink: 0;
+        }
+        .units-preview-list { flex: 1; overflow-y: auto; scrollbar-width: none; }
+        .units-preview-list::-webkit-scrollbar { display: none; }
+        .units-preview-row {
+            display: flex; justify-content: space-between; padding: 9px 14px; font-size: 14px;
+            color: #222; border-bottom: 1px solid #ddd7bd;
+        }
+        .units-preview-row:nth-child(odd) { background: #f5f2e5; }
+        .units-preview-row span:last-child { font-weight: 700; }
+        .units-select-pane { width: 300px; flex-shrink: 0; display: flex; flex-direction: column; border-left: 1px solid #c9c2a8; }
+        .units-select-header { background: #d9d3b8; font-weight: 700; font-size: 13px; color: #222; padding: 8px 14px; text-align: center; }
     </style>
 </head>
 <body>
@@ -734,7 +774,7 @@
                                 <div class="settings-swap-btn"><span class="settings-swap-icon">&#8635;</span><span data-i18n="settingsSwapLanguage">Swap Language</span></div>
 
                                 <div class="settings-section-header" data-i18n="settingsNumberFormat">Number Format</div>
-                                <div class="settings-value-box settings-value-box-disabled">1,234.55</div>
+                                <div class="settings-value-box" id="langunits-numformat-box">1,234.55</div>
 
                                 <div class="settings-section-header" data-i18n="settingsUnitsOfMeasurement">Units of Measurement</div>
                                 <div class="settings-value-box" id="langunits-units-box">Metric</div>
@@ -749,6 +789,100 @@
                             <button type="button" class="settings-btn settings-btn-cancel" id="langunits-cancel-btn">&#10005; <span data-i18n="settingsCancel">Cancel</span></button>
                             <button type="button" class="settings-btn settings-btn-save" id="langunits-save-btn">&#10003; <span data-i18n="settingsSave">Save</span></button>
                         </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- "Active" language picker: a nested modal stacked on top of the
+                 Language & Units modal (tapping the Active box opens this).
+                 Full real language list for visual fidelity, but only en/de
+                 have actual TRANSLATIONS dictionaries -- picking anything
+                 else falls back to English strings via t()'s fallback chain
+                 rather than crashing or showing fake translated text. -->
+            <div class="submenu-overlay" id="langpicker-overlay">
+                <div class="picker-modal">
+                    <div class="picker-modal-header" data-i18n="settingsActive">Active</div>
+                    <div class="picker-modal-body">
+                        <div class="picker-list" id="langpicker-list">
+                            <div class="picker-item" data-lang="da">Dansk</div>
+                            <div class="picker-item" data-lang="de">Deutsch</div>
+                            <div class="picker-item" data-lang="et">Eesti</div>
+                            <div class="picker-item" data-lang="en">English</div>
+                            <div class="picker-item" data-lang="es">Español</div>
+                            <div class="picker-item" data-lang="fr">Français</div>
+                            <div class="picker-item" data-lang="hr">Hrvat</div>
+                        </div>
+                        <div class="settings-scrollbar">
+                            <div class="settings-scroll-btn" id="langpicker-scroll-up">&#9650;</div>
+                            <div class="settings-scroll-track"></div>
+                            <div class="settings-scroll-btn" id="langpicker-scroll-down">&#9660;</div>
+                        </div>
+                    </div>
+                    <div class="settings-modal-footer">
+                        <button type="button" class="settings-btn settings-btn-cancel" id="langpicker-cancel-btn">&#10005; <span data-i18n="settingsCancel">Cancel</span></button>
+                        <button type="button" class="settings-btn settings-btn-save" id="langpicker-ok-btn">&#10003; <span data-i18n="settingsOk">OK</span></button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Number Format picker: same nested-modal pattern as the
+                 language picker. Real setting -- affects the decimal/
+                 thousands separator used by formatNumber() (speed,
+                 cross-track error, etc.), not just a display placeholder. -->
+            <div class="submenu-overlay" id="numformatpicker-overlay">
+                <div class="picker-modal">
+                    <div class="picker-modal-header" data-i18n="settingsNumberFormat">Number Format</div>
+                    <div class="picker-modal-body">
+                        <div class="picker-list" id="numformatpicker-list">
+                            <div class="picker-item" data-numformat="us">1,234.55</div>
+                            <div class="picker-item" data-numformat="eu">1.234,55</div>
+                        </div>
+                    </div>
+                    <div class="settings-modal-footer">
+                        <button type="button" class="settings-btn settings-btn-cancel" id="numformatpicker-cancel-btn">&#10005; <span data-i18n="settingsCancel">Cancel</span></button>
+                        <button type="button" class="settings-btn settings-btn-save" id="numformatpicker-ok-btn">&#10003; <span data-i18n="settingsOk">OK</span></button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Select Units of Measure: a bigger modal than the other pickers
+                 (Preview table + system list), opened directly from the Units
+                 of Measurement box instead of a simple 2-way toggle. Only
+                 Speed and Distance (cross-track) are real telemetry-backed
+                 units in this app -- Area/Fuel/Pressure/Tank Mix/Target Rate/
+                 Temperature/Weight/Volume have no backing data source, so the
+                 Preview table here is descriptive unit-abbreviation metadata
+                 (what unit *would* be used per category), never a fabricated
+                 reading. Metric column is straight from the reference photo;
+                 English is the standard imperial ag convention; Mixed English
+                 is a best-effort approximation (imperial + metric pressure/
+                 temperature) since no reference was available for it. -->
+            <div class="submenu-overlay" id="unitspicker-overlay">
+                <div class="picker-modal units-picker-modal">
+                    <div class="picker-modal-header">
+                        <span data-i18n="settingsSelectUnits">Select Units of Measure</span>
+                        <span class="menu-help-icon help-icon-dark">?</span>
+                    </div>
+                    <div class="picker-modal-body units-picker-body">
+                        <div class="units-preview-pane">
+                            <div class="units-preview-header">
+                                <span data-i18n="settingsCategory">Category</span>
+                                <span data-i18n="settingsUnit">Unit</span>
+                            </div>
+                            <div class="units-preview-list" id="units-preview-list"></div>
+                        </div>
+                        <div class="units-select-pane">
+                            <div class="units-select-header" data-i18n="settingsSelectSystemUnits">Select System Units</div>
+                            <div class="picker-list" id="unitspicker-list">
+                                <div class="picker-item" data-system="english" data-i18n="settingsEnglish">English</div>
+                                <div class="picker-item" data-system="metric" data-i18n="unitsMetric">Metric</div>
+                                <div class="picker-item" data-system="mixed" data-i18n="settingsMixedEnglish">Mixed English</div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="settings-modal-footer">
+                        <button type="button" class="settings-btn settings-btn-cancel" id="unitspicker-cancel-btn">&#10005; <span data-i18n="settingsCancel">Cancel</span></button>
+                        <button type="button" class="settings-btn settings-btn-save" id="unitspicker-ok-btn">&#10003; <span data-i18n="settingsOk">OK</span></button>
                     </div>
                 </div>
             </div>
@@ -797,7 +931,12 @@
                 settingsDisplay: 'Display', settingsIsobusVt: 'ISOBUS VT', settingsLanguage: 'Language',
                 settingsActive: 'Active', settingsAlternate: 'Alternate', settingsSwapLanguage: 'Swap Language',
                 settingsNumberFormat: 'Number Format', settingsUnitsOfMeasurement: 'Units of Measurement',
-                settingsCancel: 'Cancel', settingsSave: 'Save',
+                settingsCancel: 'Cancel', settingsSave: 'Save', settingsOk: 'OK',
+                settingsSelectUnits: 'Select Units of Measure', settingsCategory: 'Category', settingsUnit: 'Unit',
+                settingsSelectSystemUnits: 'Select System Units', settingsEnglish: 'English', settingsMixedEnglish: 'Mixed English',
+                settingsCatArea: 'Area', settingsCatDistance: 'Distance', settingsCatFuel: 'Fuel', settingsCatPressure: 'Pressure',
+                settingsCatSpeed: 'Speed', settingsCatTankMix: 'Tank Mix', settingsCatTargetRate: 'Target Rate',
+                settingsCatTemperature: 'Temperature', settingsCatWeight: 'Weight', settingsCatVolume: 'Volume',
             },
             de: {
                 pageTitleRunPage: 'Standard-Traktor-Betriebsseite', pageTitleGuidance: 'Führung',
@@ -819,7 +958,12 @@
                 settingsDisplay: 'Anzeige', settingsIsobusVt: 'ISOBUS VT', settingsLanguage: 'Sprache',
                 settingsActive: 'Aktiv', settingsAlternate: 'Alternativ', settingsSwapLanguage: 'Sprache tauschen',
                 settingsNumberFormat: 'Zahlenformat', settingsUnitsOfMeasurement: 'Maßeinheiten',
-                settingsCancel: 'Abbrechen', settingsSave: 'Speichern',
+                settingsCancel: 'Abbrechen', settingsSave: 'Speichern', settingsOk: 'OK',
+                settingsSelectUnits: 'Maßeinheiten auswählen', settingsCategory: 'Kategorie', settingsUnit: 'Einheit',
+                settingsSelectSystemUnits: 'Systemeinheiten auswählen', settingsEnglish: 'Englisch', settingsMixedEnglish: 'Gemischt Englisch',
+                settingsCatArea: 'Fläche', settingsCatDistance: 'Entfernung', settingsCatFuel: 'Kraftstoff', settingsCatPressure: 'Druck',
+                settingsCatSpeed: 'Geschwindigkeit', settingsCatTankMix: 'Tankmischung', settingsCatTargetRate: 'Zielrate',
+                settingsCatTemperature: 'Temperatur', settingsCatWeight: 'Gewicht', settingsCatVolume: 'Volumen',
             },
         };
         // NOTE: only en/tb*/sb*/menu* strings and the two page titles are covered --
@@ -830,9 +974,29 @@
         let currentLang = localStorage.getItem('tasdyn_lang') || 'en';
         let currentUnits = localStorage.getItem('tasdyn_units') || 'metric';
         let currentTimeFormat = localStorage.getItem('tasdyn_time_format') || '24h';
+        let currentNumberFormat = localStorage.getItem('tasdyn_number_format') || 'us';
+        // english/mixed both drive currentUnits='imperial' for the two real
+        // measurements this app has (speed, cross-track distance) -- they
+        // only differ from each other in categories (area/pressure/etc.)
+        // this app doesn't implement.
+        let currentUnitSystem = localStorage.getItem('tasdyn_unit_system') || (currentUnits === 'imperial' ? 'english' : 'metric');
 
         function t(key) {
             return (TRANSLATIONS[currentLang] && TRANSLATIONS[currentLang][key]) || TRANSLATIONS.en[key] || key;
+        }
+
+        // 'us' = 1,234.55 (comma thousands, period decimal); 'eu' = 1.234,55
+        // (period thousands, comma decimal). Real setting -- used everywhere
+        // a decimal value is displayed, not just shown for looks.
+        function formatNumber(value, decimals) {
+            const fixed = value.toFixed(decimals);
+            const [whole, frac] = fixed.split('.');
+            const wholeWithThousands = whole.replace(/\B(?=(\d{3})+(?!\d))/g, ',');
+            if (currentNumberFormat === 'eu') {
+                const eu = wholeWithThousands.replace(/,/g, '.');
+                return frac !== undefined ? `${eu},${frac}` : eu;
+            }
+            return frac !== undefined ? `${wholeWithThousands}.${frac}` : wholeWithThousands;
         }
 
         function applyLanguage(lang) {
@@ -847,6 +1011,17 @@
         function applyUnits(units) {
             currentUnits = units;
             localStorage.setItem('tasdyn_units', units);
+        }
+
+        function applyUnitSystem(system) {
+            currentUnitSystem = system;
+            localStorage.setItem('tasdyn_unit_system', system);
+            applyUnits(system === 'metric' ? 'metric' : 'imperial');
+        }
+
+        function applyNumberFormat(format) {
+            currentNumberFormat = format;
+            localStorage.setItem('tasdyn_number_format', format);
         }
 
         function applyTimeFormat(format) {
@@ -890,39 +1065,39 @@
         // G5 Display settings screen. Tapping a value box only edits a local
         // pending selection; nothing is applied until Save (Cancel discards).
         let pendingLang = currentLang;
-        let pendingUnits = currentUnits;
+        let pendingUnitSystem = currentUnitSystem;
+        let pendingNumberFormat = currentNumberFormat;
         const langUnitsOverlay = document.getElementById('langunits-overlay');
         const langUnitsActiveBox = document.getElementById('langunits-active-box');
         const langUnitsUnitsBox = document.getElementById('langunits-units-box');
+        const langUnitsNumFormatBox = document.getElementById('langunits-numformat-box');
         const langUnitsContent = document.getElementById('langunits-content');
 
-        function langUnitsLanguageLabel(lang) { return lang === 'de' ? 'Deutsch' : 'English'; }
-        function langUnitsUnitsLabel(units) { return units === 'imperial' ? t('unitsImperial') : t('unitsMetric'); }
+        const LANGUAGE_NAMES = { da: 'Dansk', de: 'Deutsch', et: 'Eesti', en: 'English', es: 'Español', fr: 'Français', hr: 'Hrvat' };
+        const NUMBER_FORMAT_SAMPLES = { us: '1,234.55', eu: '1.234,55' };
+        const UNIT_SYSTEM_LABELS = { english: 'settingsEnglish', metric: 'unitsMetric', mixed: 'settingsMixedEnglish' };
+        function langUnitsLanguageLabel(lang) { return LANGUAGE_NAMES[lang] || LANGUAGE_NAMES.en; }
+        function langUnitsSystemLabel(system) { return t(UNIT_SYSTEM_LABELS[system] || UNIT_SYSTEM_LABELS.metric); }
         function updateLangUnitsBoxes() {
             langUnitsActiveBox.textContent = langUnitsLanguageLabel(pendingLang);
-            langUnitsUnitsBox.textContent = langUnitsUnitsLabel(pendingUnits);
+            langUnitsUnitsBox.textContent = langUnitsSystemLabel(pendingUnitSystem);
+            langUnitsNumFormatBox.textContent = NUMBER_FORMAT_SAMPLES[pendingNumberFormat] || NUMBER_FORMAT_SAMPLES.us;
         }
 
         document.getElementById('menu-tile-langunits').addEventListener('click', () => {
             pendingLang = currentLang;
-            pendingUnits = currentUnits;
+            pendingUnitSystem = currentUnitSystem;
+            pendingNumberFormat = currentNumberFormat;
             updateLangUnitsBoxes();
             langUnitsOverlay.classList.add('active');
-        });
-        langUnitsActiveBox.addEventListener('click', () => {
-            pendingLang = pendingLang === 'en' ? 'de' : 'en';
-            updateLangUnitsBoxes();
-        });
-        langUnitsUnitsBox.addEventListener('click', () => {
-            pendingUnits = pendingUnits === 'imperial' ? 'metric' : 'imperial';
-            updateLangUnitsBoxes();
         });
         document.getElementById('langunits-cancel-btn').addEventListener('click', () => {
             langUnitsOverlay.classList.remove('active');
         });
         document.getElementById('langunits-save-btn').addEventListener('click', () => {
             applyLanguage(pendingLang);
-            applyUnits(pendingUnits);
+            applyUnitSystem(pendingUnitSystem);
+            applyNumberFormat(pendingNumberFormat);
             langUnitsOverlay.classList.remove('active');
         });
         document.getElementById('langunits-scroll-up').addEventListener('click', () => {
@@ -932,6 +1107,128 @@
             langUnitsContent.scrollBy({ top: 80, behavior: 'smooth' });
         });
         updateLangUnitsBoxes();
+
+        // --- "Active" language picker: nested modal opened from the Active
+        // box. Tapping a row only highlights it (pickerSelectedLang); OK
+        // commits that into pendingLang (still not applied until the parent
+        // modal's Save), Cancel discards the picker's own selection.
+        let pickerSelectedLang = pendingLang;
+        const langPickerOverlay = document.getElementById('langpicker-overlay');
+        const langPickerList = document.getElementById('langpicker-list');
+
+        function updateLangPickerHighlight() {
+            langPickerList.querySelectorAll('.picker-item').forEach((item) => {
+                item.classList.toggle('active', item.dataset.lang === pickerSelectedLang);
+            });
+        }
+        langUnitsActiveBox.addEventListener('click', () => {
+            pickerSelectedLang = pendingLang;
+            updateLangPickerHighlight();
+            langPickerOverlay.classList.add('active');
+        });
+        langPickerList.querySelectorAll('.picker-item').forEach((item) => {
+            item.addEventListener('click', () => {
+                pickerSelectedLang = item.dataset.lang;
+                updateLangPickerHighlight();
+            });
+        });
+        document.getElementById('langpicker-cancel-btn').addEventListener('click', () => {
+            langPickerOverlay.classList.remove('active');
+        });
+        document.getElementById('langpicker-ok-btn').addEventListener('click', () => {
+            pendingLang = pickerSelectedLang;
+            updateLangUnitsBoxes();
+            langPickerOverlay.classList.remove('active');
+        });
+        document.getElementById('langpicker-scroll-up').addEventListener('click', () => {
+            langPickerList.scrollBy({ top: -80, behavior: 'smooth' });
+        });
+        document.getElementById('langpicker-scroll-down').addEventListener('click', () => {
+            langPickerList.scrollBy({ top: 80, behavior: 'smooth' });
+        });
+
+        // --- Number Format picker: same nested-modal pattern as the
+        // language picker, just a 2-item list. ---
+        let pickerSelectedNumberFormat = pendingNumberFormat;
+        const numFormatPickerOverlay = document.getElementById('numformatpicker-overlay');
+        const numFormatPickerList = document.getElementById('numformatpicker-list');
+
+        function updateNumFormatPickerHighlight() {
+            numFormatPickerList.querySelectorAll('.picker-item').forEach((item) => {
+                item.classList.toggle('active', item.dataset.numformat === pickerSelectedNumberFormat);
+            });
+        }
+        langUnitsNumFormatBox.addEventListener('click', () => {
+            pickerSelectedNumberFormat = pendingNumberFormat;
+            updateNumFormatPickerHighlight();
+            numFormatPickerOverlay.classList.add('active');
+        });
+        numFormatPickerList.querySelectorAll('.picker-item').forEach((item) => {
+            item.addEventListener('click', () => {
+                pickerSelectedNumberFormat = item.dataset.numformat;
+                updateNumFormatPickerHighlight();
+            });
+        });
+        document.getElementById('numformatpicker-cancel-btn').addEventListener('click', () => {
+            numFormatPickerOverlay.classList.remove('active');
+        });
+        document.getElementById('numformatpicker-ok-btn').addEventListener('click', () => {
+            pendingNumberFormat = pickerSelectedNumberFormat;
+            updateLangUnitsBoxes();
+            numFormatPickerOverlay.classList.remove('active');
+        });
+
+        // --- Select Units of Measure: bigger modal (Preview table + system
+        // list) opened directly from the Units of Measurement box. Metric
+        // column matches the reference photo; English is the standard
+        // imperial ag convention; Mixed English (imperial + metric pressure/
+        // temperature) is a best-effort approximation, no reference seen for
+        // it. Only Speed/Distance actually drive real app behavior --
+        // everything else in the table is descriptive metadata, not a
+        // fabricated reading (this app has no Area/Fuel/Pressure/etc. data).
+        const UNIT_CATEGORIES = ['Area', 'Distance', 'Fuel', 'Pressure', 'Speed', 'TankMix', 'TargetRate', 'Temperature', 'Weight', 'Volume'];
+        const UNIT_SYSTEM_TABLE = {
+            metric: { Area: 'ha', Distance: 'm, km', Fuel: 'l', Pressure: 'bar, kPa', Speed: 'kph', TankMix: 'l/ha, ml/ha, kg/ha', TargetRate: 'l/ha, kg/ha', Temperature: '°C', Weight: 'kg', Volume: 'l' },
+            english: { Area: 'ac', Distance: 'ft, mi', Fuel: 'gal', Pressure: 'psi', Speed: 'mph', TankMix: 'gal/ac, fl oz/ac, lb/ac', TargetRate: 'gal/ac, lb/ac', Temperature: '°F', Weight: 'lb', Volume: 'gal' },
+            mixed: { Area: 'ac', Distance: 'ft, mi', Fuel: 'gal', Pressure: 'bar, kPa', Speed: 'mph', TankMix: 'gal/ac, fl oz/ac, lb/ac', TargetRate: 'gal/ac, lb/ac', Temperature: '°C', Weight: 'lb', Volume: 'gal' },
+        };
+        const unitsPreviewList = document.getElementById('units-preview-list');
+        function renderUnitsPreview(system) {
+            const table = UNIT_SYSTEM_TABLE[system] || UNIT_SYSTEM_TABLE.metric;
+            unitsPreviewList.innerHTML = UNIT_CATEGORIES.map((cat) =>
+                `<div class="units-preview-row"><span>${t('settingsCat' + cat)}</span><span>${table[cat]}</span></div>`
+            ).join('');
+        }
+
+        let pickerSelectedUnitSystem = pendingUnitSystem;
+        const unitsPickerOverlay = document.getElementById('unitspicker-overlay');
+        const unitsPickerList = document.getElementById('unitspicker-list');
+
+        function updateUnitsPickerHighlight() {
+            unitsPickerList.querySelectorAll('.picker-item').forEach((item) => {
+                item.classList.toggle('active', item.dataset.system === pickerSelectedUnitSystem);
+            });
+            renderUnitsPreview(pickerSelectedUnitSystem);
+        }
+        langUnitsUnitsBox.addEventListener('click', () => {
+            pickerSelectedUnitSystem = pendingUnitSystem;
+            updateUnitsPickerHighlight();
+            unitsPickerOverlay.classList.add('active');
+        });
+        unitsPickerList.querySelectorAll('.picker-item').forEach((item) => {
+            item.addEventListener('click', () => {
+                pickerSelectedUnitSystem = item.dataset.system;
+                updateUnitsPickerHighlight();
+            });
+        });
+        document.getElementById('unitspicker-cancel-btn').addEventListener('click', () => {
+            unitsPickerOverlay.classList.remove('active');
+        });
+        document.getElementById('unitspicker-ok-btn').addEventListener('click', () => {
+            pendingUnitSystem = pickerSelectedUnitSystem;
+            updateLangUnitsBoxes();
+            unitsPickerOverlay.classList.remove('active');
+        });
 
         // --- Page navigation (real toggle between Guidance and Machine Monitor pages) ---
         const pageConfigs = [
@@ -1152,7 +1449,7 @@
             const maxRange = isImperial ? MAX_TRACKING_INCHES : MAX_TRACKING_CM;
             const errorDisplay = errorMeters * (isImperial ? METERS_TO_INCHES : METERS_TO_CM);
             const unitLabel = isImperial ? 'in' : 'cm';
-            xtrackVal.innerHTML = `${Math.abs(errorDisplay).toFixed(1)}<span>${unitLabel}</span>`;
+            xtrackVal.innerHTML = `${formatNumber(Math.abs(errorDisplay), 1)}<span>${unitLabel}</span>`;
             const clampedError = Math.max(-maxRange, Math.min(maxRange, errorDisplay));
             const percentageOffset = (clampedError / maxRange) * 50;
             xtrackIndicator.style.left = `calc(50% - 12.5px + ${percentageOffset}%)`;
@@ -1165,7 +1462,7 @@
             const maxRange = isImperial ? MAX_TRACKING_INCHES : MAX_TRACKING_CM;
             const errorDisplay = errorMeters * (isImperial ? METERS_TO_INCHES : METERS_TO_CM);
             const unitLabel = isImperial ? 'in' : 'cm';
-            mm9CtYellow.innerHTML = `${Math.abs(errorDisplay).toFixed(0)}<span>${unitLabel}</span>`;
+            mm9CtYellow.innerHTML = `${formatNumber(Math.abs(errorDisplay), 0)}<span>${unitLabel}</span>`;
             const clampedError = Math.max(-maxRange, Math.min(maxRange, errorDisplay));
             const percentageOffset = (clampedError / maxRange) * 50;
             mm9CtRed.style.left = `calc(50% - 5px + ${percentageOffset}%)`;
@@ -1193,9 +1490,9 @@
 
         function formatSpeed(speedKph) {
             if (currentUnits === 'imperial') {
-                return { value: (speedKph * KPH_TO_MPH).toFixed(2), unit: 'mi/hr' };
+                return { value: formatNumber(speedKph * KPH_TO_MPH, 2), unit: 'mi/hr' };
             }
-            return { value: speedKph.toFixed(2), unit: 'km/h' };
+            return { value: formatNumber(speedKph, 2), unit: 'km/h' };
         }
 
         TasDynTelemetry.connect((payload) => {
